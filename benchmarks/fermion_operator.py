@@ -9,9 +9,7 @@
 # that they have been altered from the originals.
 
 import numpy as np
-import openfermion as of
 
-# from ffsim.slow.fermion_operator import FermionOperator
 from ffsim import FermionOperator
 
 
@@ -23,27 +21,20 @@ class FermionOperatorBenchmark:
         n_terms = 100
         rng = np.random.default_rng()
 
-        self.op_openfermion = of.FermionOperator()
-        coeffs_ffsim = {}
-
+        coeffs = {}
         for _ in range(n_terms):
             term_length = int(rng.integers(1, norb + 1))
             actions = [bool(i) for i in rng.integers(2, size=term_length)]
+            spins = [bool(i) for i in rng.integers(2, size=term_length)]
             indices = [int(i) for i in rng.integers(norb, size=term_length)]
             coeff = rng.standard_normal() + 1j * rng.standard_normal()
-            self.op_openfermion += of.FermionOperator(
-                tuple(zip(indices, actions)), coeff
-            )
-            ffsim_tuple = tuple(zip(actions, indices))
-            if ffsim_tuple in coeffs_ffsim:
-                coeffs_ffsim[ffsim_tuple] += coeff
+            fermion_action = tuple(zip(actions, spins, indices))
+            if fermion_action in coeffs:
+                coeffs[fermion_action] += coeff
             else:
-                coeffs_ffsim[ffsim_tuple] = coeff
+                coeffs[fermion_action] = coeff
 
-        self.op_ffsim = FermionOperator(coeffs_ffsim)
+        self.op = FermionOperator(coeffs)
 
-    def time_normal_order_openfermion(self):
-        of.normal_ordered(self.op_openfermion)
-
-    def time_normal_order_ffsim(self):
-        self.op_ffsim.normal_ordered()
+    def time_normal_order(self):
+        self.op.normal_ordered()
