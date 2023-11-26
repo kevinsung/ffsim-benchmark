@@ -70,22 +70,18 @@ def plot_results(
         for label, times in benchmark_results_multi_threaded.items()
     }
 
-    labels = ["Qiskit Aer", "FQE", "ffsim"]
     fmts = ["o--", "s--", "v--"]
-
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.subplots_adjust(wspace=0.25)
-    for label, fmt in zip(labels, fmts):
-        times = times_single_threaded[label]
+    for (label, times), fmt in zip(times_single_threaded.items(), fmts):
         ax1.plot(norb_range[: len(times)], times, fmt, label=label)
     ax1.set_xticks(norb_range)
     ax1.set_yscale("log")
     ax1.set_xlabel("Number of orbitals")
     ax1.set_ylabel("Time (s)")
     ax1.set_title("single-threaded")
-    ax1.legend()
-    for label, fmt in zip(labels, fmts):
-        times = times_multi_threaded[label]
+    ax1.legend(loc="upper left")
+    for (label, times), fmt in zip(times_multi_threaded.items(), fmts):
         ax2.plot(norb_range[: len(times)], times, fmt, label=label)
     ax2.set_xticks(norb_range)
     ax2.set_yscale("log")
@@ -98,9 +94,9 @@ def plot_results(
 
 # Orbital rotation, Givens
 benchmark_names = {
-    "ffsim": "gates.GatesBenchmark.time_apply_orbital_rotation_givens",
-    "FQE": "gates.GatesBenchmark.time_apply_orbital_rotation_givens_fqe",
     "Qiskit Aer": "gates.GatesBenchmark.time_apply_orbital_rotation_givens_qiskit",
+    "FQE": "gates.GatesBenchmark.time_apply_orbital_rotation_givens_fqe",
+    "ffsim": "gates.GatesBenchmark.time_apply_orbital_rotation_givens",
 }
 norb_range = [4, 8, 12, 16]
 title = "Orbital rotation (Givens)"
@@ -117,9 +113,9 @@ for filling_fraction in [0.25, 0.5]:
 
 # Quadratic Hamiltonian evolution
 benchmark_names = {
-    "ffsim": "gates.GatesBenchmark.time_quad_ham_evolution",
-    "FQE": "gates.GatesBenchmark.time_quad_ham_evolution_fqe",
     "Qiskit Aer": "gates.GatesBenchmark.time_quad_ham_evolution_qiskit",
+    "FQE": "gates.GatesBenchmark.time_quad_ham_evolution_fqe",
+    "ffsim": "gates.GatesBenchmark.time_quad_ham_evolution",
 }
 norb_range = [4, 8, 12, 16]
 title = "Quadratic Hamiltonian"
@@ -135,13 +131,30 @@ for filling_fraction in [0.25, 0.5]:
 
 # Double-factorized Trotter simulation
 benchmark_names = {
-    "ffsim": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized",
-    "FQE": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe",
     "Qiskit Aer": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_qiskit",
+    "FQE": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe",
+    "ffsim": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized",
 }
 norb_range = [4, 8, 12, 16]
 title = "Double-factorized Trotter"
 filename = "double_factorized_trotter"
+for filling_fraction in [0.25, 0.5]:
+    plot_results(
+        benchmark_names=benchmark_names,
+        norb_range=norb_range,
+        filling_fraction=filling_fraction,
+        title=title,
+        filename=filename,
+    )
+
+# Givens vs LU orbital rotation
+benchmark_names = {
+    "Givens": "gates.GatesBenchmark.time_apply_orbital_rotation_givens",
+    "LU": "gates.GatesBenchmark.time_apply_orbital_rotation_lu",
+}
+norb_range = [4, 8, 12, 16]
+title = "Orbital rotation, Givens vs LU"
+filename = "orbital_rotation_givens_vs_lu"
 for filling_fraction in [0.25, 0.5]:
     plot_results(
         benchmark_names=benchmark_names,
