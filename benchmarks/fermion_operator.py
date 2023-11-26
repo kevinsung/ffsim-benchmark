@@ -9,6 +9,7 @@
 # that they have been altered from the originals.
 
 import numpy as np
+import openfermion as of
 
 from ffsim import FermionOperator
 
@@ -22,6 +23,8 @@ class FermionOperatorBenchmark:
         rng = np.random.default_rng()
 
         coeffs = {}
+        self.op_openfermion = of.FermionOperator()
+
         for _ in range(n_terms):
             term_length = int(rng.integers(1, norb + 1))
             actions = [bool(i) for i in rng.integers(2, size=term_length)]
@@ -33,8 +36,14 @@ class FermionOperatorBenchmark:
                 coeffs[fermion_action] += coeff
             else:
                 coeffs[fermion_action] = coeff
+            self.op_openfermion += of.FermionOperator(
+                tuple(zip(indices, actions)), coeff
+            )
 
         self.op = FermionOperator(coeffs)
 
     def time_normal_order(self):
         self.op.normal_ordered()
+
+    def time_normal_order_openfermion(self):
+        of.normal_ordered(self.op_openfermion)

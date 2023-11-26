@@ -18,6 +18,10 @@
         "3.10"
     ],
     "matrix": {
+        "req": {
+            "fqe": [],
+            "openfermion": []
+        },
         "env_nobuild": {
             "RAYON_NUM_THREADS": "1",
             "OMP_NUM_THREADS": "1",
@@ -25,6 +29,7 @@
             "MKL_NUM_THREADS": "1"
         }
     },
+    "default_benchmark_timeout": 5000,
     "env_dir": ".asv/env",
     "results_dir": ".asv/results",
     "html_dir": ".asv/html"
