@@ -20,7 +20,10 @@
     "matrix": {
         "req": {
             "fqe": [],
-            "openfermion": []
+            "openfermion": [],
+            "qiskit-nature": [
+                "0.6.2"
+            ]
         },
         "env_nobuild": {
             "RAYON_NUM_THREADS": "1",
