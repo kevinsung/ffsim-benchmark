@@ -163,3 +163,66 @@ for filling_fraction in [0.25, 0.5]:
         title=title,
         filename=filename,
     )
+
+
+def plot_results_ratio(
+    benchmark_names: dict[str, str],
+    norb_range: list[int],
+    filling_fraction: float,
+    title: str,
+    filename: str,
+    plots_dir: str = "plots",
+) -> None:
+    benchmark_results_single_threaded = {}
+    for label, benchmark_name in benchmark_names.items():
+        these_results = dict(
+            zip(
+                DATA_SINGLE_THREADED["result_columns"],
+                DATA_SINGLE_THREADED["results"][benchmark_name],
+            )
+        )
+        benchmark_results_single_threaded[label] = dict(
+            zip(itertools.product(*these_results["params"]), these_results["result"])
+        )
+
+    filling_denominator = int(1 / filling_fraction)
+
+    times_single_threaded = {
+        label: [times[(str(norb), str(filling_fraction))] for norb in norb_range]
+        for label, times in benchmark_results_single_threaded.items()
+    }
+
+    fig, ax = plt.subplots(1, 1)
+    fig.subplots_adjust(wspace=0.25)
+    labels = list(times_single_threaded.keys())
+    label0 = labels[0]
+    label1 = labels[1]
+    times0 = times_single_threaded[label0]
+    times1 = times_single_threaded[label1]
+    ratios = [t0 / t1 for t0, t1 in zip(times0, times1)]
+    ax.plot(norb_range, ratios, "o--")
+    ax.axhline(1.0, linestyle="--", color="gray")
+    ax.set_xticks(norb_range)
+    ax.set_xlabel("Number of orbitals")
+    ax.set_ylabel(f"Time {label0} / Time {label1}")
+    fig.suptitle(f"{title}, filling 1/{filling_denominator}", size="x-large")
+    os.makedirs(plots_dir, exist_ok=True)
+    plt.savefig(f"{plots_dir}/{filename}_filling-{1 / filling_denominator}.pdf")
+
+
+# Givens vs LU orbital rotation ratio
+benchmark_names = {
+    "Givens": "gates.GatesBenchmark.time_apply_orbital_rotation_givens",
+    "LU": "gates.GatesBenchmark.time_apply_orbital_rotation_lu",
+}
+norb_range = [4, 8, 12, 16]
+title = "Orbital rotation, Givens vs LU"
+filename = "orbital_rotation_givens_vs_lu_ratio"
+for filling_fraction in [0.25, 0.5]:
+    plot_results_ratio(
+        benchmark_names=benchmark_names,
+        norb_range=norb_range,
+        filling_fraction=filling_fraction,
+        title=title,
+        filename=filename,
+    )
