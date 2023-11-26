@@ -38,7 +38,7 @@ class TrotterBenchmark:
     ]
     params = [
         (4, 8, 12, 16),
-        (0.25,),
+        (0.25, 0.5),
     ]
 
     def setup(self, norb: int, filling_fraction: float):
@@ -118,6 +118,7 @@ class TrotterBenchmark:
             copy=False,
         )
 
+    @skip_for_params([(16, 0.5)])
     def time_simulate_trotter_double_factorized_fqe(self, *_):
         step_time = self.time / self.n_steps
         vec_fqe = self.vec_fqe
@@ -129,6 +130,6 @@ class TrotterBenchmark:
                 step_time,
             )
 
-    @skip_for_params([(16, 0.25)])
+    @skip_for_params([(16, 0.25), (16, 0.5)])
     def time_simulate_trotter_double_factorized_qiskit(self, *_):
         self.aer_sim.run(self.circuit).result()
