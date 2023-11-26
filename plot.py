@@ -74,7 +74,7 @@ def plot_results(
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.subplots_adjust(wspace=0.25)
     for (label, times), fmt in zip(times_single_threaded.items(), fmts):
-        ax1.plot(norb_range[: len(times)], times, fmt, label=label)
+        ax1.plot(norb_range, times, fmt, label=label)
     ax1.set_xticks(norb_range)
     ax1.set_yscale("log")
     ax1.set_xlabel("Number of orbitals")
@@ -82,7 +82,7 @@ def plot_results(
     ax1.set_title("single-threaded")
     ax1.legend(loc="upper left")
     for (label, times), fmt in zip(times_multi_threaded.items(), fmts):
-        ax2.plot(norb_range[: len(times)], times, fmt, label=label)
+        ax2.plot(norb_range, times, fmt, label=label)
     ax2.set_xticks(norb_range)
     ax2.set_yscale("log")
     ax2.set_xlabel("Number of orbitals")
