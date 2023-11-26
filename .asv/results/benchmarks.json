@@ -1,0 +1,526 @@
+{
+    "fermion_operator.FermionOperatorBenchmark.time_normal_order": {
+        "code": "class FermionOperatorBenchmark:\n    def time_normal_order(self):\n        self.op.normal_ordered()\n\n    def setup(self):\n        norb = 50\n        n_terms = 100\n        rng = np.random.default_rng()\n    \n        coeffs = {}\n        self.op_openfermion = of.FermionOperator()\n    \n        for _ in range(n_terms):\n            term_length = int(rng.integers(1, norb + 1))\n            actions = [bool(i) for i in rng.integers(2, size=term_length)]\n            spins = [bool(i) for i in rng.integers(2, size=term_length)]\n            indices = [int(i) for i in rng.integers(norb, size=term_length)]\n            coeff = rng.standard_normal() + 1j * rng.standard_normal()\n            fermion_action = tuple(zip(actions, spins, indices))\n            if fermion_action in coeffs:\n                coeffs[fermion_action] += coeff\n            else:\n                coeffs[fermion_action] = coeff\n            self.op_openfermion += of.FermionOperator(\n                tuple(zip(indices, actions)), coeff\n            )\n    \n        self.op = FermionOperator(coeffs)",
+        "min_run_count": 2,
+        "name": "fermion_operator.FermionOperatorBenchmark.time_normal_order",
+        "number": 0,
+        "param_names": [],
+        "params": [],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "f6b67421fe13f023754e93a945473eff1ac01d8cae1890f7212397434f7e0116",
+        "warmup_time": -1
+    },
+    "fermion_operator.FermionOperatorBenchmark.time_normal_order_openfermion": {
+        "code": "class FermionOperatorBenchmark:\n    def time_normal_order_openfermion(self):\n        of.normal_ordered(self.op_openfermion)\n\n    def setup(self):\n        norb = 50\n        n_terms = 100\n        rng = np.random.default_rng()\n    \n        coeffs = {}\n        self.op_openfermion = of.FermionOperator()\n    \n        for _ in range(n_terms):\n            term_length = int(rng.integers(1, norb + 1))\n            actions = [bool(i) for i in rng.integers(2, size=term_length)]\n            spins = [bool(i) for i in rng.integers(2, size=term_length)]\n            indices = [int(i) for i in rng.integers(norb, size=term_length)]\n            coeff = rng.standard_normal() + 1j * rng.standard_normal()\n            fermion_action = tuple(zip(actions, spins, indices))\n            if fermion_action in coeffs:\n                coeffs[fermion_action] += coeff\n            else:\n                coeffs[fermion_action] = coeff\n            self.op_openfermion += of.FermionOperator(\n                tuple(zip(indices, actions)), coeff\n            )\n    \n        self.op = FermionOperator(coeffs)",
+        "min_run_count": 2,
+        "name": "fermion_operator.FermionOperatorBenchmark.time_normal_order_openfermion",
+        "number": 0,
+        "param_names": [],
+        "params": [],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "28317e3118da719c326802ce12ff898e6aa369ee34e618a100b505a350598bbd",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_diag_coulomb_evolution": {
+        "code": "class GatesBenchmark:\n    def time_apply_diag_coulomb_evolution(self, *_):\n        ffsim.apply_diag_coulomb_evolution(\n            self.vec,\n            self.diag_coulomb_mat,\n            time=1.0,\n            norb=self.norb,\n            nelec=self.nelec,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_diag_coulomb_evolution",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "1993035cce44615dcd713916c329d04e7176a5b65eb90c2b16505be56f125816",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_givens_rotation": {
+        "code": "class GatesBenchmark:\n    def time_apply_givens_rotation(self, *_):\n        ffsim.apply_givens_rotation(\n            self.vec,\n            theta=1.0,\n            target_orbs=(0, 2),\n            norb=self.norb,\n            nelec=self.nelec,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_givens_rotation",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "b590ec3977264c948a52179963d679c08b82cb92aba68ce8134df03d0a9f5392",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_num_interaction": {
+        "code": "class GatesBenchmark:\n    def time_apply_num_interaction(self, *_):\n        ffsim.apply_num_interaction(\n            self.vec,\n            theta=1.0,\n            target_orb=1,\n            norb=self.norb,\n            nelec=self.nelec,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_num_interaction",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "63e947ad974ad224169930e6b51cb444d05819f73375ddcf07ced6f47732bd98",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_num_num_interaction": {
+        "code": "class GatesBenchmark:\n    def time_apply_num_num_interaction(self, *_):\n        ffsim.apply_num_num_interaction(\n            self.vec,\n            theta=1.0,\n            target_orbs=(0, 1),\n            norb=self.norb,\n            nelec=self.nelec,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_num_num_interaction",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "93e3d940971d8ef22e506cd6361b48f96d235cf1d02ee2bd510d2809e06c94ae",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_num_op_prod_interaction": {
+        "code": "class GatesBenchmark:\n    def time_apply_num_op_prod_interaction(self, *_):\n        ffsim.apply_num_op_prod_interaction(\n            self.vec,\n            theta=1.0,\n            target_orbs=([1], [0]),\n            norb=self.norb,\n            nelec=self.nelec,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_num_op_prod_interaction",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "b46f5ecba815a789183164bb76ab1a5161b9c8c591609a45c120f59c7c3df724",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_num_op_sum_evolution": {
+        "code": "class GatesBenchmark:\n    def time_apply_num_op_sum_evolution(self, *_):\n        ffsim.apply_num_op_sum_evolution(\n            self.vec,\n            self.orbital_energies,\n            time=1.0,\n            norb=self.norb,\n            nelec=self.nelec,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_num_op_sum_evolution",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "15858b5ea03f45e4fe90b3d737fa54d590401505dc707cb0c9e3de8d2080d178",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_orbital_rotation_givens": {
+        "code": "class GatesBenchmark:\n    def time_apply_orbital_rotation_givens(self, *_):\n        ffsim.apply_orbital_rotation(\n            self.vec,\n            self.orbital_rotation,\n            norb=self.norb,\n            nelec=self.nelec,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_orbital_rotation_givens",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "b255abd31d20f1f5292dccb6276607167adf59306001f98f20e30350b0dc6f9e",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_orbital_rotation_givens_fqe": {
+        "code": "class GatesBenchmark:\n    @skip_for_params([(16, 0.5)])\n    def time_apply_orbital_rotation_givens_fqe(self, *_):\n        evolve_fqe_givens(self.vec_fqe, self.orbital_rotation)\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_orbital_rotation_givens_fqe",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "0ff469a273cee37bf03cf1f0babc015c88b61027e4ab4c874469f6d087609a4e",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_orbital_rotation_givens_qiskit": {
+        "code": "class GatesBenchmark:\n    @skip_for_params([(16, 0.25), (16, 0.5)])\n    def time_apply_orbital_rotation_givens_qiskit(self, *_):\n        self.aer_sim.run(self.orbital_rotation_circuit).result()\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_orbital_rotation_givens_qiskit",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "a78b0a06f777d731ed2fa28583ac01733b735bfbcd24aef01f8072434f3ac9f9",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_orbital_rotation_lu": {
+        "code": "class GatesBenchmark:\n    def time_apply_orbital_rotation_lu(self, *_):\n        ffsim.apply_orbital_rotation(\n            self.vec,\n            self.orbital_rotation,\n            norb=self.norb,\n            nelec=self.nelec,\n            allow_col_permutation=True,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_orbital_rotation_lu",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "3c01bf2a41911488cfa885574e90a96c0d77ce1d08c27901741e21704bb85e54",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_apply_tunneling_interaction": {
+        "code": "class GatesBenchmark:\n    def time_apply_tunneling_interaction(self, *_):\n        ffsim.apply_tunneling_interaction(\n            self.vec,\n            theta=1.0,\n            target_orbs=(0, 2),\n            norb=self.norb,\n            nelec=self.nelec,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_apply_tunneling_interaction",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "5b495efeae5c2acebbcf4e027566eb4357607f0d3e0aaf4a83f3c4959a7d7930",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_quad_ham_evolution": {
+        "code": "class GatesBenchmark:\n    def time_quad_ham_evolution(self, *_):\n        ffsim.apply_num_op_sum_evolution(\n            self.vec,\n            self.orbital_energies,\n            time=1.0,\n            norb=self.norb,\n            nelec=self.nelec,\n            orbital_rotation=self.orbital_rotation,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_quad_ham_evolution",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "823ecfc98aef9470dfdb31f3cd24e4f424bbeaa0b94641983a00cd414fa23002",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_quad_ham_evolution_fqe": {
+        "code": "class GatesBenchmark:\n    def time_quad_ham_evolution_fqe(self, *_):\n        self.vec_fqe.time_evolve(1.0, self.fqe_ham)\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_quad_ham_evolution_fqe",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "48afb6ab7bfc2a817583bf121957076cd45661a11cfbae6fe8423ecb037f9849",
+        "warmup_time": -1
+    },
+    "gates.GatesBenchmark.time_quad_ham_evolution_qiskit": {
+        "code": "class GatesBenchmark:\n    @skip_for_params([(16, 0.25), (16, 0.5)])\n    def time_quad_ham_evolution_qiskit(self, *_):\n        self.aer_sim.run(self.quad_ham_evo_circuit).result()\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.random.random_statevector(\n            ffsim.dim(self.norb, self.nelec), seed=rng\n        )\n        self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(\n            self.one_body_tensor\n        )\n        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(\n            self.norb, seed=rng\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        n_particles = n_alpha + n_beta\n        spin = n_alpha - n_beta\n        self.vec_fqe = fqe.Wavefunction([[n_particles, spin, norb]])\n        dim_a, dim_b = ffsim.dims(self.norb, self.nelec)\n        self.vec_fqe.set_wfn(\n            strategy=\"from_data\",\n            raw_data={(n_particles, spin): self.vec.reshape(dim_a, dim_b).copy()},\n        )\n        self.fqe_ham = RestrictedHamiltonian((self.one_body_tensor,))\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = ffsim.random.random_statevector(2 ** (2 * norb), seed=rng)\n            # orbital rotation circuit\n            register = QuantumRegister(2 * norb)\n            circuit = QuantumCircuit(register)\n            circuit.set_statevector(initial_state)\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[:norb]\n            )\n            circuit.append(\n                BogoliubovTransform(self.orbital_rotation.T), register[norb:]\n            )\n            circuit.save_state()\n            self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)\n            # quad ham evolution circuit\n            circuit = num_op_sum_evo_circuit(\n                self.orbital_energies,\n                initial_state,\n                1.0,\n                norb=norb,\n                orbital_rotation=self.orbital_rotation,\n            )\n            self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "gates.GatesBenchmark.time_quad_ham_evolution_qiskit",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "2d243b7fc1fa7fbe048b93329e33e7d79f3efa5e1e3970446b8f6d4b30ff568c",
+        "warmup_time": -1
+    },
+    "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized": {
+        "code": "class TrotterBenchmark:\n    def time_simulate_trotter_double_factorized(self, *_):\n        ffsim.simulate_trotter_double_factorized(\n            self.vec,\n            self.df_hamiltonian,\n            self.time,\n            norb=self.norb,\n            nelec=self.nelec,\n            n_steps=self.n_steps,\n            order=0,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n        self.time = 1.0\n        self.n_steps = 3\n        rank = 3\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)\n        one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        two_body_tensor = ffsim.random.random_two_body_tensor_real(\n            self.norb, rank=rank, seed=rng\n        )\n        mol_hamiltonian = ffsim.MolecularHamiltonian(\n            one_body_tensor=one_body_tensor, two_body_tensor=two_body_tensor\n        )\n        self.df_hamiltonian = (\n            ffsim.DoubleFactorizedHamiltonian.from_molecular_hamiltonian(\n                mol_hamiltonian, max_vecs=rank\n            )\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        self.vec_fqe = fqe.Wavefunction([[n_alpha + n_beta, n_alpha - n_beta, norb]])\n        self.vec_fqe.set_wfn(strategy=\"hartree-fock\")\n        low_rank_trotter = LowRankTrotter(\n            oei=one_body_tensor,\n            tei=np.asarray(two_body_tensor.transpose(0, 2, 3, 1), order=\"C\"),\n        )\n        (\n            self.basis_change_unitaries,\n            self.diag_coulomb_mats,\n        ) = low_rank_trotter.prepare_trotter_sequence(self.time)\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = np.array(\n                Statevector(\n                    HartreeFock(\n                        2 * self.norb, self.nelec, QubitConverter(JordanWignerMapper())\n                    )\n                )\n            )\n            qubits = QuantumRegister(2 * norb)\n            trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)\n            circuit = QuantumCircuit(qubits)\n            circuit.set_statevector(initial_state)\n            for instruction in simulate_trotter(\n                trotter_step,\n                self.time,\n                n_steps=self.n_steps,\n            ):\n                circuit.append(instruction)\n            circuit.save_state()\n            self.circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "83c756d6927a767083b08865a5222332c5681c031b3ca23eb2e6476323ae60c5",
+        "warmup_time": -1
+    },
+    "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe": {
+        "code": "class TrotterBenchmark:\n    @skip_for_params([(16, 0.5)])\n    def time_simulate_trotter_double_factorized_fqe(self, *_):\n        step_time = self.time / self.n_steps\n        vec_fqe = self.vec_fqe\n        for _ in range(self.n_steps):\n            vec_fqe = double_factor_trotter_evolution(\n                self.vec_fqe,\n                self.basis_change_unitaries,\n                self.diag_coulomb_mats,\n                step_time,\n            )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n        self.time = 1.0\n        self.n_steps = 3\n        rank = 3\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)\n        one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        two_body_tensor = ffsim.random.random_two_body_tensor_real(\n            self.norb, rank=rank, seed=rng\n        )\n        mol_hamiltonian = ffsim.MolecularHamiltonian(\n            one_body_tensor=one_body_tensor, two_body_tensor=two_body_tensor\n        )\n        self.df_hamiltonian = (\n            ffsim.DoubleFactorizedHamiltonian.from_molecular_hamiltonian(\n                mol_hamiltonian, max_vecs=rank\n            )\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        self.vec_fqe = fqe.Wavefunction([[n_alpha + n_beta, n_alpha - n_beta, norb]])\n        self.vec_fqe.set_wfn(strategy=\"hartree-fock\")\n        low_rank_trotter = LowRankTrotter(\n            oei=one_body_tensor,\n            tei=np.asarray(two_body_tensor.transpose(0, 2, 3, 1), order=\"C\"),\n        )\n        (\n            self.basis_change_unitaries,\n            self.diag_coulomb_mats,\n        ) = low_rank_trotter.prepare_trotter_sequence(self.time)\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = np.array(\n                Statevector(\n                    HartreeFock(\n                        2 * self.norb, self.nelec, QubitConverter(JordanWignerMapper())\n                    )\n                )\n            )\n            qubits = QuantumRegister(2 * norb)\n            trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)\n            circuit = QuantumCircuit(qubits)\n            circuit.set_statevector(initial_state)\n            for instruction in simulate_trotter(\n                trotter_step,\n                self.time,\n                n_steps=self.n_steps,\n            ):\n                circuit.append(instruction)\n            circuit.save_state()\n            self.circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "4cf103500cb0a9624420f2becca9c71449659a4b1bf2ea56e664bcf0c17c2870",
+        "warmup_time": -1
+    },
+    "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_qiskit": {
+        "code": "class TrotterBenchmark:\n    @skip_for_params([(16, 0.25), (16, 0.5)])\n    def time_simulate_trotter_double_factorized_qiskit(self, *_):\n        self.aer_sim.run(self.circuit).result()\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n        self.time = 1.0\n        self.n_steps = 3\n        rank = 3\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)\n        one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        two_body_tensor = ffsim.random.random_two_body_tensor_real(\n            self.norb, rank=rank, seed=rng\n        )\n        mol_hamiltonian = ffsim.MolecularHamiltonian(\n            one_body_tensor=one_body_tensor, two_body_tensor=two_body_tensor\n        )\n        self.df_hamiltonian = (\n            ffsim.DoubleFactorizedHamiltonian.from_molecular_hamiltonian(\n                mol_hamiltonian, max_vecs=rank\n            )\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        self.vec_fqe = fqe.Wavefunction([[n_alpha + n_beta, n_alpha - n_beta, norb]])\n        self.vec_fqe.set_wfn(strategy=\"hartree-fock\")\n        low_rank_trotter = LowRankTrotter(\n            oei=one_body_tensor,\n            tei=np.asarray(two_body_tensor.transpose(0, 2, 3, 1), order=\"C\"),\n        )\n        (\n            self.basis_change_unitaries,\n            self.diag_coulomb_mats,\n        ) = low_rank_trotter.prepare_trotter_sequence(self.time)\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = np.array(\n                Statevector(\n                    HartreeFock(\n                        2 * self.norb, self.nelec, QubitConverter(JordanWignerMapper())\n                    )\n                )\n            )\n            qubits = QuantumRegister(2 * norb)\n            trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)\n            circuit = QuantumCircuit(qubits)\n            circuit.set_statevector(initial_state)\n            for instruction in simulate_trotter(\n                trotter_step,\n                self.time,\n                n_steps=self.n_steps,\n            ):\n                circuit.append(instruction)\n            circuit.save_state()\n            self.circuit = transpile(circuit, self.aer_sim)",
+        "min_run_count": 2,
+        "name": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_qiskit",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "43f4478e2c90ef1e60a014d2a29695007a526b3e32af37b78c7426f831b3dab3",
+        "warmup_time": -1
+    },
+    "version": 2
+}
