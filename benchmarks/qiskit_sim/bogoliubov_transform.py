@@ -28,9 +28,7 @@ from qiskit_nature.second_q.mappers import JordanWignerMapper
 from qiskit_nature.second_q.operators import FermionicOp
 from qiskit_nature.utils.linalg import fermionic_gaussian_decomposition_jw
 
-from qiskit_sim.linalg import (
-    givens_decomposition_square,
-)
+from .linalg import givens_decomposition_square
 
 
 def _rows_are_orthonormal(

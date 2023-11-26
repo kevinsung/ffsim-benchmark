@@ -21,6 +21,7 @@
         "req": {
             "fqe": [],
             "openfermion": [],
+            "qiskit-aer": [],
             "qiskit-nature": [
                 "0.6.2"
             ]

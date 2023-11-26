@@ -25,9 +25,10 @@ from qiskit.circuit import CircuitInstruction, Qubit
 from qiskit.circuit.library import CPhaseGate, PhaseGate, RZZGate
 from qiskit_nature.operators.second_quantization import QuadraticHamiltonian
 
-from qiskit_sim.bogoliubov_transform import BogoliubovTransformJW
-from qiskit_sim.low_rank import DoubleFactorizedHamiltonian
-from qiskit_sim.swap_network import swap_network
+from ffsim import DoubleFactorizedHamiltonian
+
+from .bogoliubov_transform import BogoliubovTransformJW
+from .swap_network import swap_network
 
 
 class TrotterStep(abc.ABC):

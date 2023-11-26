@@ -16,10 +16,15 @@ from asv_runner.benchmarks.mark import skip_for_params
 from fqe.algorithm.low_rank import double_factor_trotter_evolution
 from fqe.algorithm.low_rank_api import LowRankTrotter
 from qiskit import QuantumCircuit, QuantumRegister, transpile
+from qiskit.quantum_info import Statevector
 from qiskit_aer import AerSimulator
-from qiskit_sim.trotter import AsymmetricLowRankTrotterStepJW, simulate_trotter
+from qiskit_nature.circuit.library import HartreeFock
+from qiskit_nature.converters.second_quantization import QubitConverter
+from qiskit_nature.mappers.second_quantization import JordanWignerMapper
 
 import ffsim
+
+from .qiskit_sim.trotter import AsymmetricLowRankTrotterStepJW, simulate_trotter
 
 OMP_NUM_THREADS = int(os.environ.get("OMP_NUM_THREADS", 1))
 
@@ -79,7 +84,13 @@ class TrotterBenchmark:
         fqe.settings.use_accelerated_code = True
 
         # prepare Qiskit
-        initial_state = ffsim.random.random_statevector(2 ** (2 * norb), dtype=complex)
+        initial_state = np.array(
+            Statevector(
+                HartreeFock(
+                    2 * self.norb, self.nelec, QubitConverter(JordanWignerMapper())
+                )
+            )
+        )
         qubits = QuantumRegister(2 * norb)
         trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)
         circuit = QuantumCircuit(qubits)
@@ -107,8 +118,9 @@ class TrotterBenchmark:
 
     def time_simulate_trotter_double_factorized_fqe(self, *_):
         step_time = self.time / self.n_steps
+        vec_fqe = self.vec_fqe
         for _ in range(self.n_steps):
-            self.vec_fqe = double_factor_trotter_evolution(
+            vec_fqe = double_factor_trotter_evolution(
                 self.vec_fqe,
                 self.basis_change_unitaries,
                 self.diag_coulomb_mats,
@@ -118,6 +130,3 @@ class TrotterBenchmark:
     @skip_for_params([(16, 0.25)])
     def time_simulate_trotter_double_factorized_qiskit(self, *_):
         self.aer_sim.run(self.circuit).result()
-
-
-TrotterBenchmark().setup(16, 0.25)
