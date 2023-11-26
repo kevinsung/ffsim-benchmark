@@ -42,7 +42,7 @@ class TrotterBenchmark:
     ]
 
     def setup(self, norb: int, filling_fraction: float):
-        # benchmark parameters
+        # set benchmark parameters
         self.norb = norb
         nocc = int(norb * filling_fraction)
         self.nelec = (nocc, nocc)
@@ -50,7 +50,7 @@ class TrotterBenchmark:
         self.n_steps = 3
         rank = 3
 
-        # initialize random objects
+        # initialize test objects
         rng = np.random.default_rng()
         self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)
         one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)
@@ -84,26 +84,27 @@ class TrotterBenchmark:
         fqe.settings.use_accelerated_code = True
 
         # prepare Qiskit
-        initial_state = np.array(
-            Statevector(
-                HartreeFock(
-                    2 * self.norb, self.nelec, QubitConverter(JordanWignerMapper())
+        if norb <= 12:
+            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)
+            initial_state = np.array(
+                Statevector(
+                    HartreeFock(
+                        2 * self.norb, self.nelec, QubitConverter(JordanWignerMapper())
+                    )
                 )
             )
-        )
-        qubits = QuantumRegister(2 * norb)
-        trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)
-        circuit = QuantumCircuit(qubits)
-        circuit.set_statevector(initial_state)
-        for instruction in simulate_trotter(
-            trotter_step,
-            self.time,
-            n_steps=self.n_steps,
-        ):
-            circuit.append(instruction)
-        circuit.save_state()
-        self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)
-        self.circuit = transpile(circuit, self.aer_sim)
+            qubits = QuantumRegister(2 * norb)
+            trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)
+            circuit = QuantumCircuit(qubits)
+            circuit.set_statevector(initial_state)
+            for instruction in simulate_trotter(
+                trotter_step,
+                self.time,
+                n_steps=self.n_steps,
+            ):
+                circuit.append(instruction)
+            circuit.save_state()
+            self.circuit = transpile(circuit, self.aer_sim)
 
     def time_simulate_trotter_double_factorized(self, *_):
         ffsim.simulate_trotter_double_factorized(
@@ -114,6 +115,7 @@ class TrotterBenchmark:
             nelec=self.nelec,
             n_steps=self.n_steps,
             order=0,
+            copy=False,
         )
 
     def time_simulate_trotter_double_factorized_fqe(self, *_):
