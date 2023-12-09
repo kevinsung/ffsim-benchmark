@@ -435,6 +435,35 @@
         "version": "2d243b7fc1fa7fbe048b93329e33e7d79f3efa5e1e3970446b8f6d4b30ff568c",
         "warmup_time": -1
     },
+    "linear_operator.LinearOperatorBenchmark.time_molecular_hamiltonian": {
+        "code": "class LinearOperatorBenchmark:\n    def time_molecular_hamiltonian(self, *_):\n        _ = self.mol_hamiltonian_linop @ self.vec\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)\n        one_body_tensor = ffsim.random.random_hermitian(norb, seed=rng)\n        two_body_tensor = ffsim.random.random_two_body_tensor(\n            norb, seed=rng, dtype=float\n        )\n        constant = rng.standard_normal()\n        mol_hamiltonian = ffsim.MolecularHamiltonian(\n            one_body_tensor=one_body_tensor,\n            two_body_tensor=two_body_tensor,\n            constant=constant,\n        )\n        self.mol_hamiltonian_linop = ffsim.linear_operator(\n            mol_hamiltonian, norb=norb, nelec=self.nelec\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)",
+        "min_run_count": 2,
+        "name": "linear_operator.LinearOperatorBenchmark.time_molecular_hamiltonian",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "0ba7cedc12d90578f47ce2255000d9b446a66dd150a988a7ad6df853caa00094",
+        "warmup_time": -1
+    },
     "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized": {
         "code": "class TrotterBenchmark:\n    def time_simulate_trotter_double_factorized(self, *_):\n        ffsim.simulate_trotter_double_factorized(\n            self.vec,\n            self.df_hamiltonian,\n            self.time,\n            norb=self.norb,\n            nelec=self.nelec,\n            n_steps=self.n_steps,\n            order=0,\n            copy=False,\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n        self.time = 1.0\n        self.n_steps = 3\n        rank = 3\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)\n        one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)\n        two_body_tensor = ffsim.random.random_two_body_tensor_real(\n            self.norb, rank=rank, seed=rng\n        )\n        mol_hamiltonian = ffsim.MolecularHamiltonian(\n            one_body_tensor=one_body_tensor, two_body_tensor=two_body_tensor\n        )\n        self.df_hamiltonian = (\n            ffsim.DoubleFactorizedHamiltonian.from_molecular_hamiltonian(\n                mol_hamiltonian, max_vecs=rank\n            )\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)\n    \n        # prepare FQE\n        n_alpha, n_beta = self.nelec\n        self.vec_fqe = fqe.Wavefunction([[n_alpha + n_beta, n_alpha - n_beta, norb]])\n        self.vec_fqe.set_wfn(strategy=\"hartree-fock\")\n        low_rank_trotter = LowRankTrotter(\n            oei=one_body_tensor,\n            tei=np.asarray(two_body_tensor.transpose(0, 2, 3, 1), order=\"C\"),\n        )\n        (\n            self.basis_change_unitaries,\n            self.diag_coulomb_mats,\n        ) = low_rank_trotter.prepare_trotter_sequence(self.time)\n        fqe.settings.use_accelerated_code = True\n    \n        # prepare Qiskit\n        if norb <= 12:\n            self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)\n            initial_state = np.array(\n                Statevector(\n                    HartreeFock(\n                        2 * self.norb, self.nelec, QubitConverter(JordanWignerMapper())\n                    )\n                )\n            )\n            qubits = QuantumRegister(2 * norb)\n            trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)\n            circuit = QuantumCircuit(qubits)\n            circuit.set_statevector(initial_state)\n            for instruction in simulate_trotter(\n                trotter_step,\n                self.time,\n                n_steps=self.n_steps,\n            ):\n                circuit.append(instruction)\n            circuit.save_state()\n            self.circuit = transpile(circuit, self.aer_sim)",
         "min_run_count": 2,
@@ -520,6 +549,64 @@
         "type": "time",
         "unit": "seconds",
         "version": "43f4478e2c90ef1e60a014d2a29695007a526b3e32af37b78c7426f831b3dab3",
+        "warmup_time": -1
+    },
+    "variational.HopGateAnsatzBenchmark.time_hop_gate_ansatz": {
+        "code": "class HopGateAnsatzBenchmark:\n    def time_hop_gate_ansatz(self, *_):\n        ffsim.apply_unitary(\n            self.vec, self.operator, norb=self.norb, nelec=self.nelec, copy=False\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.hartree_fock_state(norb, self.nelec)\n        interaction_pairs = list(itertools.combinations(range(norb), 2))\n        thetas = rng.uniform(-np.pi, np.pi, size=len(interaction_pairs))\n        self.operator = ffsim.HopGateAnsatzOperator(\n            norb, interaction_pairs, thetas=thetas\n        )\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)",
+        "min_run_count": 2,
+        "name": "variational.HopGateAnsatzBenchmark.time_hop_gate_ansatz",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "caa743469d9cce14a658b02b7d99eb96790891ee1613eef779dca90857a9a553",
+        "warmup_time": -1
+    },
+    "variational.UCJBenchmark.time_ucj": {
+        "code": "class UCJBenchmark:\n    def time_ucj(self, *_):\n        ffsim.apply_unitary(\n            self.vec, self.operator, norb=self.norb, nelec=self.nelec, copy=False\n        )\n\n    def setup(self, norb: int, filling_fraction: float):\n        # set benchmark parameters\n        self.norb = norb\n        nocc = int(norb * filling_fraction)\n        self.nelec = (nocc, nocc)\n        n_reps = 3\n    \n        # initialize test objects\n        rng = np.random.default_rng()\n        self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)\n        t2 = ffsim.random.random_t2_amplitudes(self.norb, nocc, seed=rng, dtype=float)\n        self.operator = ffsim.UCJOperator.from_t_amplitudes(t2, n_reps=n_reps)\n    \n        # initialize ffsim cache\n        ffsim.init_cache(self.norb, self.nelec)",
+        "min_run_count": 2,
+        "name": "variational.UCJBenchmark.time_ucj",
+        "number": 0,
+        "param_names": [
+            "norb",
+            "filling_fraction"
+        ],
+        "params": [
+            [
+                "4",
+                "8",
+                "12",
+                "16"
+            ],
+            [
+                "0.25",
+                "0.5"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "type": "time",
+        "unit": "seconds",
+        "version": "5cb72dfb3cfbf5d0857558fb2e7cec1fb3695a105864bba5748f685df32a549e",
         "warmup_time": -1
     },
     "version": 2

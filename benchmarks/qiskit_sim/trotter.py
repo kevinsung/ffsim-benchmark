@@ -17,10 +17,9 @@ from __future__ import annotations
 import abc
 import itertools
 from collections.abc import Iterator
-from typing import Any, Optional, Sequence
+from typing import Optional, Sequence
 
 import numpy as np
-from qiskit import QuantumCircuit
 from qiskit.circuit import CircuitInstruction, Qubit
 from qiskit.circuit.library import CPhaseGate, PhaseGate, RZZGate
 from qiskit_nature.operators.second_quantization import QuadraticHamiltonian
