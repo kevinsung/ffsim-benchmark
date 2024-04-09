@@ -20,11 +20,10 @@ from typing import Optional, Sequence
 import numpy as np
 from qiskit.circuit import CircuitInstruction, Qubit
 from qiskit.circuit.library import CPhaseGate, PhaseGate, RZZGate
-from qiskit_nature.operators.second_quantization import QuadraticHamiltonian
 
 from ffsim import DoubleFactorizedHamiltonian
+import ffsim
 
-from .bogoliubov_transform import BogoliubovTransformJW
 from .swap_network import swap_network
 
 
@@ -200,19 +199,17 @@ def _simulate_one_body(
     n_qubits = len(qubits)
     n_modes = n_qubits // 2
 
-    transformation_matrix, orbital_energies, _ = QuadraticHamiltonian(
-        one_body_tensor
-    ).diagonalizing_bogoliubov_transform()
-    bog_circuit = BogoliubovTransformJW(transformation_matrix.T.conj())
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    orbital_energies, transformation_matrix = np.linalg.eigh(one_body_tensor)
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(transformation_matrix.T.conj()), qubits
+    )
     for i in range(n_modes):
         phase_gate = PhaseGate(-orbital_energies[i] * time)
         yield CircuitInstruction(phase_gate, (qubits[i],))
         yield CircuitInstruction(phase_gate, (qubits[n_modes + i],))
-    bog_circuit = BogoliubovTransformJW(transformation_matrix)
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(transformation_matrix), qubits
+    )
 
 
 def _simulate_one_body_controlled(
@@ -225,21 +222,19 @@ def _simulate_one_body_controlled(
     n_modes = n_qubits // 2
     n_control_qubits = len(control_qubits)
 
-    transformation_matrix, orbital_energies, _ = QuadraticHamiltonian(
-        one_body_tensor
-    ).diagonalizing_bogoliubov_transform()
-    bog_circuit = BogoliubovTransformJW(transformation_matrix.T.conj())
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    orbital_energies, transformation_matrix = np.linalg.eigh(one_body_tensor)
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(transformation_matrix.T.conj()), qubits
+    )
     for i in range(n_modes):
         phase_gate = PhaseGate(-orbital_energies[i] * time).control(n_control_qubits)
         yield CircuitInstruction(phase_gate, list(control_qubits) + [qubits[i]])
         yield CircuitInstruction(
             phase_gate, list(control_qubits) + [qubits[n_modes + i]]
         )
-    bog_circuit = BogoliubovTransformJW(transformation_matrix)
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(transformation_matrix), qubits
+    )
 
 
 def _simulate_two_body(
@@ -251,9 +246,9 @@ def _simulate_two_body(
     n_qubits = len(qubits)
     n_modes = n_qubits // 2
 
-    bog_circuit = BogoliubovTransformJW(orbital_rotation.conj())
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+    )
     for i, j in itertools.combinations_with_replacement(range(n_modes), 2):
         coeff = 0.5 if i == j else 1
         for sigma in range(2):
@@ -281,9 +276,7 @@ def _simulate_two_body(
                         qubits[j + sigma * n_modes],
                     ),
                 )
-    bog_circuit = BogoliubovTransformJW(orbital_rotation.T)
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
 
 
 def _simulate_two_body_z_representation(
@@ -295,9 +288,9 @@ def _simulate_two_body_z_representation(
     n_qubits = len(qubits)
     n_modes = n_qubits // 2
 
-    bog_circuit = BogoliubovTransformJW(orbital_rotation.conj())
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+    )
     for i, j in itertools.combinations(range(n_qubits), 2):
         yield CircuitInstruction(
             RZZGate(0.5 * diag_coulomb_mat[i % n_modes, j % n_modes] * time),
@@ -306,9 +299,7 @@ def _simulate_two_body_z_representation(
                 qubits[j],
             ),
         )
-    bog_circuit = BogoliubovTransformJW(orbital_rotation.T)
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
 
 
 def _simulate_two_body_swap_network_z_representation(
@@ -320,10 +311,9 @@ def _simulate_two_body_swap_network_z_representation(
     n_qubits = len(qubits)
     n_modes = n_qubits // 2
 
-    bog = BogoliubovTransformJW(orbital_rotation.conj())
-    yield CircuitInstruction(bog, qubits[:n_modes])
-    yield CircuitInstruction(bog, qubits[n_modes:])
-
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+    )
     yield from swap_network(
         qubits,
         lambda i, j, a, b: CircuitInstruction(
@@ -331,10 +321,7 @@ def _simulate_two_body_swap_network_z_representation(
         ),
     )
     qubits = qubits[::-1]
-
-    bog = BogoliubovTransformJW(orbital_rotation.T)
-    yield CircuitInstruction(bog, qubits[:n_modes])
-    yield CircuitInstruction(bog, qubits[n_modes:])
+    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
 
 
 def _simulate_two_body_controlled(
@@ -348,9 +335,9 @@ def _simulate_two_body_controlled(
     n_modes = n_qubits // 2
     n_control_qubits = len(control_qubits)
 
-    bog_circuit = BogoliubovTransformJW(orbital_rotation.conj())
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+    )
     for i, j in itertools.combinations_with_replacement(range(n_modes), 2):
         coeff = 0.5 if i == j else 1
         for sigma in range(2):
@@ -382,9 +369,7 @@ def _simulate_two_body_controlled(
                         qubits[j + sigma * n_modes],
                     ],
                 )
-    bog_circuit = BogoliubovTransformJW(orbital_rotation.T)
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
 
 
 def _simulate_two_body_controlled_z_representation(
@@ -398,9 +383,9 @@ def _simulate_two_body_controlled_z_representation(
     n_modes = n_qubits // 2
     n_control_qubits = len(control_qubits)
 
-    bog_circuit = BogoliubovTransformJW(orbital_rotation.conj())
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+    )
     for i, j in itertools.combinations(range(n_qubits), 2):
         yield CircuitInstruction(
             RZZGate(0.5 * diag_coulomb_mat[i % n_modes, j % n_modes] * time).control(
@@ -412,9 +397,7 @@ def _simulate_two_body_controlled_z_representation(
                 qubits[j],
             ],
         )
-    bog_circuit = BogoliubovTransformJW(orbital_rotation.T)
-    yield CircuitInstruction(bog_circuit, qubits[:n_modes])
-    yield CircuitInstruction(bog_circuit, qubits[n_modes:])
+    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
 
 
 def _simulate_two_body_controlled_swap_network(
@@ -428,10 +411,9 @@ def _simulate_two_body_controlled_swap_network(
     n_modes = n_qubits // 2
     n_control_qubits = len(control_qubits)
 
-    bog = BogoliubovTransformJW(orbital_rotation.conj())
-    yield CircuitInstruction(bog, qubits[:n_modes])
-    yield CircuitInstruction(bog, qubits[n_modes:])
-
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+    )
     yield from swap_network(
         qubits,
         lambda i, j, a, b: CircuitInstruction(
@@ -442,7 +424,4 @@ def _simulate_two_body_controlled_swap_network(
         ),
     )
     qubits = qubits[::-1]
-
-    bog = BogoliubovTransformJW(orbital_rotation.T)
-    yield CircuitInstruction(bog, qubits[:n_modes])
-    yield CircuitInstruction(bog, qubits[n_modes:])
+    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)

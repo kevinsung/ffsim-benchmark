@@ -26,7 +26,7 @@ class LinearOperatorBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8, 12, 16),
+        (4, 8),
         (0.25, 0.5),
     ]
 

@@ -17,7 +17,6 @@ from fqe.algorithm.low_rank import evolve_fqe_givens
 from fqe.hamiltonians.restricted_hamiltonian import RestrictedHamiltonian
 from qiskit import QuantumCircuit, QuantumRegister, transpile
 from qiskit_aer import AerSimulator
-from qiskit_nature.circuit.library import BogoliubovTransform
 
 import ffsim
 
@@ -35,13 +34,13 @@ def num_op_sum_evo_circuit(
     circuit = QuantumCircuit(qubits)
     circuit.set_statevector(initial_state)
     if orbital_rotation is not None:
-        circuit.append(BogoliubovTransform(orbital_rotation.conj()), qubits[:norb])
-        circuit.append(BogoliubovTransform(orbital_rotation.conj()), qubits[norb:])
+        circuit.append(
+            ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+        )
     for q, energy in zip(qubits, coeffs):
         circuit.rz(-energy * time, q)
     if orbital_rotation is not None:
-        circuit.append(BogoliubovTransform(orbital_rotation.T), qubits[:norb])
-        circuit.append(BogoliubovTransform(orbital_rotation.T), qubits[norb:])
+        circuit.append(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
     circuit.save_state()
     return circuit
 
@@ -54,7 +53,7 @@ class GatesBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8, 12, 16),
+        (4, 8),
         (0.25, 0.5),
     ]
 
@@ -102,10 +101,7 @@ class GatesBenchmark:
             circuit = QuantumCircuit(register)
             circuit.set_statevector(initial_state)
             circuit.append(
-                BogoliubovTransform(self.orbital_rotation.T), register[:norb]
-            )
-            circuit.append(
-                BogoliubovTransform(self.orbital_rotation.T), register[norb:]
+                ffsim.qiskit.OrbitalRotationJW(self.orbital_rotation), register
             )
             circuit.save_state()
             self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)

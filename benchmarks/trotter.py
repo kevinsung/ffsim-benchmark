@@ -18,9 +18,6 @@ from fqe.algorithm.low_rank_api import LowRankTrotter
 from qiskit import QuantumCircuit, QuantumRegister, transpile
 from qiskit.quantum_info import Statevector
 from qiskit_aer import AerSimulator
-from qiskit_nature.circuit.library import HartreeFock
-from qiskit_nature.converters.second_quantization import QubitConverter
-from qiskit_nature.mappers.second_quantization import JordanWignerMapper
 
 import ffsim
 
@@ -37,7 +34,7 @@ class TrotterBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8, 12, 16),
+        (4, 8),
         (0.25, 0.5),
     ]
 
@@ -86,12 +83,8 @@ class TrotterBenchmark:
         # prepare Qiskit
         if norb <= 12:
             self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)
-            initial_state = np.array(
-                Statevector(
-                    HartreeFock(
-                        2 * self.norb, self.nelec, QubitConverter(JordanWignerMapper())
-                    )
-                )
+            initial_state = ffsim.qiskit.ffsim_vec_to_qiskit_vec(
+                ffsim.hartree_fock_state(self.norb, self.nelec)
             )
             qubits = QuantumRegister(2 * norb)
             trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)
