@@ -51,8 +51,8 @@ class TrotterBenchmark:
         rng = np.random.default_rng()
         self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)
         one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)
-        two_body_tensor = ffsim.random.random_two_body_tensor_real(
-            self.norb, rank=rank, seed=rng
+        two_body_tensor = ffsim.random.random_two_body_tensor(
+            self.norb, rank=rank, seed=rng, dtype=float
         )
         mol_hamiltonian = ffsim.MolecularHamiltonian(
             one_body_tensor=one_body_tensor, two_body_tensor=two_body_tensor
@@ -84,7 +84,9 @@ class TrotterBenchmark:
         if norb <= 12:
             self.aer_sim = AerSimulator(max_parallel_threads=OMP_NUM_THREADS)
             initial_state = ffsim.qiskit.ffsim_vec_to_qiskit_vec(
-                ffsim.hartree_fock_state(self.norb, self.nelec)
+                ffsim.hartree_fock_state(self.norb, self.nelec),
+                norb=self.norb,
+                nelec=self.nelec,
             )
             qubits = QuantumRegister(2 * norb)
             trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)
