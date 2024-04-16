@@ -8,10 +8,12 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-import ffsim
-from ffsim_benchmark.random import random_fermion_hamiltonian
-from ffsim_benchmark.fqe_convert import pyscf_to_fqe_wf, fqe_to_pyscf
 import numpy as np
+from ffsim_benchmark.convert import ffsim_op_to_openfermion_op
+from ffsim_benchmark.fqe_convert import fqe_to_pyscf, pyscf_to_fqe_wf
+from ffsim_benchmark.random import random_fermion_hamiltonian
+
+import ffsim
 
 
 def test_random_fermion_operators():
@@ -19,9 +21,8 @@ def test_random_fermion_operators():
     norb = 5
     nelec = (3, 2)
     n_terms = 10
-    op_ffsim, op_openfermion = random_fermion_hamiltonian(
-        norb=norb, n_terms=n_terms, seed=rng
-    )
+    op_ffsim = random_fermion_hamiltonian(norb=norb, n_terms=n_terms, seed=rng)
+    op_openfermion = ffsim_op_to_openfermion_op(op_ffsim)
     vec_ffsim = ffsim.random.random_statevector(ffsim.dim(norb, nelec), seed=rng)
     wfn = pyscf_to_fqe_wf(
         vec_ffsim.reshape(*ffsim.dims(norb, nelec)), norbs=norb, nelec=nelec

@@ -11,17 +11,16 @@
 from collections import defaultdict
 
 import numpy as np
-import openfermion as of
 
 import ffsim
 
 
-def random_fermion_operators(
+def random_fermion_operator(
     norb: int, n_terms: int, seed=None
-) -> tuple[ffsim.FermionOperator, of.FermionOperator]:
+) -> ffsim.FermionOperator:
+    """Sample a random fermion operator."""
     rng = np.random.default_rng(seed)
-    coeffs = {}
-    op_openfermion = of.FermionOperator()
+    coeffs = defaultdict(complex)
 
     for _ in range(n_terms):
         term_length = int(rng.integers(1, norb + 1))
@@ -29,52 +28,37 @@ def random_fermion_operators(
         spins = [bool(i) for i in rng.integers(2, size=term_length)]
         indices = [int(i) for i in rng.integers(norb, size=term_length)]
         coeff = rng.standard_normal() + 1j * rng.standard_normal()
-        fermion_action = tuple(zip(actions, spins, indices))
-        if fermion_action in coeffs:
-            coeffs[fermion_action] += coeff
-        else:
-            coeffs[fermion_action] = coeff
-        op_openfermion += of.FermionOperator(tuple(zip(indices, actions)), coeff)
+        term = tuple(zip(actions, spins, indices))
+        coeffs[term] += coeff
 
     op_ffsim = ffsim.FermionOperator(coeffs)
 
-    return op_ffsim, op_openfermion
+    return op_ffsim
 
 
 def random_fermion_hamiltonian(
     norb: int, n_terms: int, seed=None
-) -> tuple[ffsim.FermionOperator, of.FermionOperator]:
+) -> ffsim.FermionOperator:
     """Sample a random fermion Hamiltonian.
 
     A fermion Hamiltonian is hermitian and conserves particle number and spin Z.
     """
     rng = np.random.default_rng(seed)
     coeffs = defaultdict(complex)
-    op_openfermion = of.FermionOperator()
 
     for _ in range(n_terms):
         n_excitations = int(rng.integers(1, norb // 2 + 1))
-
         ffsim_term = _random_num_and_spin_z_conserving_term(
             n_excitations, norb=norb, seed=rng
         )
         ffsim_term_adjoint = _adjoint_term(ffsim_term)
-        openfermion_term = _ffsim_term_to_openfermion_term(ffsim_term)
-        openfermion_term_adjoint = _ffsim_term_to_openfermion_term(ffsim_term_adjoint)
-
         coeff = rng.standard_normal() + 1j * rng.standard_normal()
-
         coeffs[ffsim_term] += coeff
         coeffs[ffsim_term_adjoint] += coeff.conjugate()
 
-        op_openfermion += of.FermionOperator(openfermion_term, coeff)
-        op_openfermion += of.FermionOperator(
-            openfermion_term_adjoint, coeff.conjugate()
-        )
-
     op_ffsim = ffsim.FermionOperator(coeffs)
 
-    return op_ffsim, op_openfermion
+    return op_ffsim
 
 
 def _random_num_and_spin_z_conserving_term(
@@ -100,9 +84,3 @@ def _adjoint_term(
         ffsim.FermionAction(bool(1 - action), spin, orb)
         for action, spin, orb in reversed(term)
     )
-
-
-def _ffsim_term_to_openfermion_term(
-    term: tuple[tuple[bool, bool, int], ...],
-) -> tuple[tuple[int, bool], ...]:
-    return tuple((2 * orb + spin, action) for action, spin, orb in term)

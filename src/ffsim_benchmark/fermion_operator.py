@@ -10,16 +10,16 @@
 
 import openfermion as of
 
-from ffsim_benchmark.random import random_fermion_operators
+from ffsim_benchmark.convert import ffsim_op_to_openfermion_op
+from ffsim_benchmark.random import random_fermion_operator
 
 
 class FermionOperatorBenchmark:
     """Benchmark FermionOperator."""
 
     def setup(self):
-        self.op_ffsim, self.op_openfermion = random_fermion_operators(
-            norb=50, n_terms=100, seed=4142
-        )
+        self.op_ffsim = random_fermion_operator(norb=50, n_terms=100, seed=4142)
+        self.op_openfermion = ffsim_op_to_openfermion_op(self.op_ffsim)
 
     def time_normal_order_ffsim(self):
         self.op_ffsim.normal_ordered()

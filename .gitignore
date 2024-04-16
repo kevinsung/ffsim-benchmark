@@ -129,7 +129,10 @@ dmypy.json
 .pyre/
 
 # asv
-.asv/html
+.asv
 
 # plots
 plots
+
+# source repository
+ffsim
