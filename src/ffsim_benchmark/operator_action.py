@@ -25,7 +25,7 @@ class OperatorActionBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8),
+        (4, 8, 12),
         (0.25, 0.5),
     ]
 

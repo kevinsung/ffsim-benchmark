@@ -16,14 +16,17 @@ import ffsim
 
 
 def random_fermion_operator(
-    norb: int, n_terms: int, seed=None
+    norb: int, n_terms: int, max_term_length: int | None = None, seed=None
 ) -> ffsim.FermionOperator:
     """Sample a random fermion operator."""
     rng = np.random.default_rng(seed)
-    coeffs = defaultdict(complex)
 
+    if max_term_length is None:
+        max_term_length = norb
+
+    coeffs = defaultdict(complex)
     for _ in range(n_terms):
-        term_length = int(rng.integers(1, norb + 1))
+        term_length = int(rng.integers(1, max_term_length + 1))
         actions = [bool(i) for i in rng.integers(2, size=term_length)]
         spins = [bool(i) for i in rng.integers(2, size=term_length)]
         indices = [int(i) for i in rng.integers(norb, size=term_length)]
