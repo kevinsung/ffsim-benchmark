@@ -16,7 +16,6 @@ from asv_runner.benchmarks.mark import skip_for_params
 from fqe.algorithm.low_rank import double_factor_trotter_evolution
 from fqe.algorithm.low_rank_api import LowRankTrotter
 from qiskit import QuantumCircuit, QuantumRegister, transpile
-from qiskit.quantum_info import Statevector
 from qiskit_aer import AerSimulator
 
 import ffsim

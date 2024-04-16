@@ -21,8 +21,8 @@ import numpy as np
 from qiskit.circuit import CircuitInstruction, Qubit
 from qiskit.circuit.library import CPhaseGate, PhaseGate, RZZGate
 
-from ffsim import DoubleFactorizedHamiltonian
 import ffsim
+from ffsim import DoubleFactorizedHamiltonian
 
 from .swap_network import swap_network
 

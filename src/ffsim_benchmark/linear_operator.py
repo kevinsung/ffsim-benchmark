@@ -10,8 +10,6 @@
 
 """Benchmarks for linear operators."""
 
-import itertools
-import os
 
 import numpy as np
 

@@ -6,3 +6,15 @@ requires = ["flit_core"]
 name = "ffsim-benchmark"
 version = "0.0.0"
 description = "Benchmarks for ffsim"
+
+[tool.ruff]
+include = [
+    "pyproject.toml",
+    "src/**/*.py",
+    "src/**/*.pyi",
+    "tests/**/*.py",
+    "tests/**/*.pyi",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "NPY"]
