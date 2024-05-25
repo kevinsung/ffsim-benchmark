@@ -13,8 +13,11 @@
 import numpy as np
 
 import ffsim
-from ffsim_benchmark.convert import ffsim_op_to_openfermion_op, ffsim_vec_to_fqe_wfn
-from ffsim_benchmark.random import random_fermion_hamiltonian
+from ffsim_benchmark.util.convert import (
+    ffsim_op_to_openfermion_op,
+    ffsim_vec_to_fqe_wfn,
+)
+from ffsim_benchmark.util.random import random_fermion_hamiltonian
 
 
 class OperatorActionBenchmark:
@@ -25,7 +28,7 @@ class OperatorActionBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8, 12),
+        (4, 8),
         (0.25, 0.5),
     ]
 

@@ -13,7 +13,7 @@ import numpy as np
 import openfermion as of
 
 import ffsim
-from ffsim_benchmark.convert_fqe import fqe_to_pyscf, pyscf_to_fqe_wf
+from ffsim_benchmark.util.convert_fqe import fqe_to_pyscf, pyscf_to_fqe_wf
 
 
 def ffsim_op_to_openfermion_op(operator: ffsim.FermionOperator) -> of.FermionOperator:

@@ -10,8 +10,8 @@
 
 import openfermion as of
 
-from ffsim_benchmark.convert import ffsim_op_to_openfermion_op
-from ffsim_benchmark.random import random_fermion_operator
+from ffsim_benchmark.util.convert import ffsim_op_to_openfermion_op
+from ffsim_benchmark.util.random import random_fermion_operator
 
 
 class FermionOperatorBenchmark:

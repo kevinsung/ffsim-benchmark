@@ -11,12 +11,12 @@
 """Tests for operator action."""
 
 import numpy as np
-from ffsim_benchmark.convert import (
+from ffsim_benchmark.util.convert import (
     ffsim_op_to_openfermion_op,
     ffsim_vec_to_fqe_wfn,
     fqe_wfn_to_ffsim_vec,
 )
-from ffsim_benchmark.random import random_fermion_hamiltonian
+from ffsim_benchmark.util.random import random_fermion_hamiltonian
 
 import ffsim
 
