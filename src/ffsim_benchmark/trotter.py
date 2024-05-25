@@ -25,6 +25,24 @@ from .qiskit_sim.trotter import AsymmetricLowRankTrotterStepJW, simulate_trotter
 OMP_NUM_THREADS = int(os.environ.get("OMP_NUM_THREADS", 1))
 
 
+def simulate_trotter_double_factorized_fqe(
+    vec_fqe,
+    time: float,
+    n_steps: int,
+    basis_change_unitaries: np.ndarray,
+    diag_coulomb_mats: np.ndarray,
+):
+    step_time = time / n_steps
+    for _ in range(n_steps):
+        vec_fqe = double_factor_trotter_evolution(
+            vec_fqe,
+            basis_change_unitaries,
+            diag_coulomb_mats,
+            step_time,
+        )
+    return vec_fqe
+
+
 class TrotterBenchmark:
     """Benchmark Trotter."""
 
@@ -114,15 +132,13 @@ class TrotterBenchmark:
 
     @skip_for_params([(16, 0.5)])
     def time_simulate_trotter_double_factorized_fqe(self, *_):
-        step_time = self.time / self.n_steps
-        vec_fqe = self.vec_fqe
-        for _ in range(self.n_steps):
-            vec_fqe = double_factor_trotter_evolution(
-                self.vec_fqe,
-                self.basis_change_unitaries,
-                self.diag_coulomb_mats,
-                step_time,
-            )
+        simulate_trotter_double_factorized_fqe(
+            self.vec_fqe,
+            time=self.time,
+            n_steps=self.n_steps,
+            basis_change_unitaries=self.basis_change_unitaries,
+            diag_coulomb_mats=self.diag_coulomb_mats,
+        )
 
     @skip_for_params([(16, 0.25), (16, 0.5)])
     def time_simulate_trotter_double_factorized_qiskit(self, *_):

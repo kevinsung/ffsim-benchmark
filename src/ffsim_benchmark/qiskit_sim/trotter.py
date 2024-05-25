@@ -201,14 +201,14 @@ def _simulate_one_body(
 
     orbital_energies, transformation_matrix = np.linalg.eigh(one_body_tensor)
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(transformation_matrix.T.conj()), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, transformation_matrix.T.conj()), qubits
     )
     for i in range(n_modes):
         phase_gate = PhaseGate(-orbital_energies[i] * time)
         yield CircuitInstruction(phase_gate, (qubits[i],))
         yield CircuitInstruction(phase_gate, (qubits[n_modes + i],))
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(transformation_matrix), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, transformation_matrix), qubits
     )
 
 
@@ -224,7 +224,7 @@ def _simulate_one_body_controlled(
 
     orbital_energies, transformation_matrix = np.linalg.eigh(one_body_tensor)
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(transformation_matrix.T.conj()), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, transformation_matrix.T.conj()), qubits
     )
     for i in range(n_modes):
         phase_gate = PhaseGate(-orbital_energies[i] * time).control(n_control_qubits)
@@ -233,7 +233,7 @@ def _simulate_one_body_controlled(
             phase_gate, list(control_qubits) + [qubits[n_modes + i]]
         )
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(transformation_matrix), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, transformation_matrix), qubits
     )
 
 
@@ -247,7 +247,7 @@ def _simulate_two_body(
     n_modes = n_qubits // 2
 
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation.T.conj()), qubits
     )
     for i, j in itertools.combinations_with_replacement(range(n_modes), 2):
         coeff = 0.5 if i == j else 1
@@ -276,7 +276,9 @@ def _simulate_two_body(
                         qubits[j + sigma * n_modes],
                     ),
                 )
-    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation), qubits
+    )
 
 
 def _simulate_two_body_z_representation(
@@ -289,7 +291,7 @@ def _simulate_two_body_z_representation(
     n_modes = n_qubits // 2
 
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation.T.conj()), qubits
     )
     for i, j in itertools.combinations(range(n_qubits), 2):
         yield CircuitInstruction(
@@ -299,7 +301,9 @@ def _simulate_two_body_z_representation(
                 qubits[j],
             ),
         )
-    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation), qubits
+    )
 
 
 def _simulate_two_body_swap_network_z_representation(
@@ -312,7 +316,7 @@ def _simulate_two_body_swap_network_z_representation(
     n_modes = n_qubits // 2
 
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation.T.conj()), qubits
     )
     yield from swap_network(
         qubits,
@@ -321,7 +325,9 @@ def _simulate_two_body_swap_network_z_representation(
         ),
     )
     qubits = qubits[::-1]
-    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation), qubits
+    )
 
 
 def _simulate_two_body_controlled(
@@ -336,7 +342,7 @@ def _simulate_two_body_controlled(
     n_control_qubits = len(control_qubits)
 
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation.T.conj()), qubits
     )
     for i, j in itertools.combinations_with_replacement(range(n_modes), 2):
         coeff = 0.5 if i == j else 1
@@ -369,7 +375,9 @@ def _simulate_two_body_controlled(
                         qubits[j + sigma * n_modes],
                     ],
                 )
-    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation), qubits
+    )
 
 
 def _simulate_two_body_controlled_z_representation(
@@ -384,7 +392,7 @@ def _simulate_two_body_controlled_z_representation(
     n_control_qubits = len(control_qubits)
 
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation.T.conj()), qubits
     )
     for i, j in itertools.combinations(range(n_qubits), 2):
         yield CircuitInstruction(
@@ -397,7 +405,9 @@ def _simulate_two_body_controlled_z_representation(
                 qubits[j],
             ],
         )
-    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation), qubits
+    )
 
 
 def _simulate_two_body_controlled_swap_network(
@@ -412,7 +422,7 @@ def _simulate_two_body_controlled_swap_network(
     n_control_qubits = len(control_qubits)
 
     yield CircuitInstruction(
-        ffsim.qiskit.OrbitalRotationJW(orbital_rotation.T.conj()), qubits
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation.T.conj()), qubits
     )
     yield from swap_network(
         qubits,
@@ -424,4 +434,6 @@ def _simulate_two_body_controlled_swap_network(
         ),
     )
     qubits = qubits[::-1]
-    yield CircuitInstruction(ffsim.qiskit.OrbitalRotationJW(orbital_rotation), qubits)
+    yield CircuitInstruction(
+        ffsim.qiskit.OrbitalRotationJW(n_modes, orbital_rotation), qubits
+    )
