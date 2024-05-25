@@ -12,10 +12,10 @@
         "main"
     ],
     "dvcs": "git",
-    "environment_type": "conda",
+    "environment_type": "virtualenv",
     "show_commit_url": "http://github.com/qiskit-community/ffsim/commit/",
     "pythons": [
-        "3.10"
+        "3.12"
     ],
     "matrix": {
         "req": {
