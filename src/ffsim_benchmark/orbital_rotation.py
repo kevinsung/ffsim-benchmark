@@ -84,7 +84,6 @@ class OrbitalRotationBenchmark:
             norb=self.norb,
             nelec=self.nelec,
             copy=False,
-            validate=False,
         )
 
     @skip_for_params([(16, 0.5)])
