@@ -10,7 +10,6 @@
 
 """Benchmarks for linear operators."""
 
-
 import numpy as np
 
 import ffsim
@@ -24,7 +23,7 @@ class LinearOperatorBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8),
+        (4, 8, 12),
         (0.25, 0.5),
     ]
 

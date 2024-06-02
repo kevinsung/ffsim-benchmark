@@ -25,7 +25,7 @@ class GatesBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8),
+        (4, 8, 12, 16),
         (0.25, 0.5),
     ]
 
@@ -95,7 +95,17 @@ class GatesBenchmark:
         ffsim.apply_num_num_interaction(
             self.vec,
             theta=1.0,
-            target_orbs=(0, 1),
+            target_orbs=(1, 2),
+            norb=self.norb,
+            nelec=self.nelec,
+            copy=False,
+        )
+
+    def time_apply_on_site_interaction(self, *_):
+        ffsim.apply_on_site_interaction(
+            self.vec,
+            theta=1.0,
+            target_orb=1,
             norb=self.norb,
             nelec=self.nelec,
             copy=False,
