@@ -40,15 +40,44 @@ class UCJBenchmark:
         # initialize test objects
         rng = np.random.default_rng()
         self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)
-        t2 = ffsim.random.random_t2_amplitudes(self.norb, nocc, seed=rng, dtype=float)
-        self.operator = ffsim.UCJOperator.from_t_amplitudes(t2, n_reps=n_reps)
+        self.ucj_op_spin_balanced = ffsim.random.random_ucj_op_spin_balanced(
+            norb, n_reps=n_reps, with_final_orbital_rotation=True, seed=rng
+        )
+        self.ucj_op_spin_unbalanced = ffsim.random.random_ucj_op_spin_unbalanced(
+            norb, n_reps=n_reps, with_final_orbital_rotation=True, seed=rng
+        )
+        self.ucj_op_spinless = ffsim.random.random_ucj_op_spinless(
+            norb, n_reps=n_reps, with_final_orbital_rotation=True, seed=rng
+        )
 
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
 
-    def time_ucj(self, *_):
+    def time_ucj_spin_balanced(self, *_):
         ffsim.apply_unitary(
-            self.vec, self.operator, norb=self.norb, nelec=self.nelec, copy=False
+            self.vec,
+            self.ucj_op_spin_balanced,
+            norb=self.norb,
+            nelec=self.nelec,
+            copy=False,
+        )
+
+    def time_ucj_spin_unbalanced(self, *_):
+        ffsim.apply_unitary(
+            self.vec,
+            self.ucj_op_spin_unbalanced,
+            norb=self.norb,
+            nelec=self.nelec,
+            copy=False,
+        )
+
+    def time_ucj_spinless(self, *_):
+        ffsim.apply_unitary(
+            self.vec,
+            self.ucj_op_spinless,
+            norb=self.norb,
+            nelec=self.nelec,
+            copy=False,
         )
 
 

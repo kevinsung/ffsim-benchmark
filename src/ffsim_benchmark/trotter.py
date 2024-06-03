@@ -118,7 +118,7 @@ class TrotterBenchmark:
             circuit.save_state()
             self.circuit = transpile(circuit, self.aer_sim)
 
-    def time_simulate_trotter_double_factorized(self, *_):
+    def time_simulate_trotter_double_factorized_ffsim(self, *_):
         ffsim.simulate_trotter_double_factorized(
             self.vec,
             self.df_hamiltonian,
