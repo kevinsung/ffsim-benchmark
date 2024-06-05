@@ -53,5 +53,5 @@ class LinearOperatorBenchmark:
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
 
-    def time_molecular_hamiltonian(self, *_):
+    def time_molecular_hamiltonian_ffsim(self, *_):
         _ = self.mol_hamiltonian_linop @ self.vec

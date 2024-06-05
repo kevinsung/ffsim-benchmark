@@ -77,7 +77,7 @@ class OrbitalRotationBenchmark:
             circuit.save_state()
             self.orbital_rotation_circuit = transpile(circuit, self.aer_sim)
 
-    def time_apply_orbital_rotation(self, *_):
+    def time_apply_orbital_rotation_ffsim(self, *_):
         ffsim.apply_orbital_rotation(
             self.vec,
             self.orbital_rotation,

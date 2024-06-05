@@ -56,8 +56,8 @@ class OperatorActionBenchmark:
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
 
-    def time_ffsim(self, *_):
+    def time_operator_action_ffsim(self, *_):
         _ = self.linop_ffsim @ self.vec_ffsim
 
-    def time_openfermion(self, *_):
+    def time_operator_action_fqe(self, *_):
         _ = self.wfn_fqe.apply(self.op_openfermion)

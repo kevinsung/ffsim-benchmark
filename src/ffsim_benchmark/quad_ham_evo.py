@@ -103,7 +103,7 @@ class QuadHamEvoBenchmark:
             )
             self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)
 
-    def time_quad_ham_evolution(self, *_):
+    def time_quad_ham_evolution_ffsim(self, *_):
         ffsim.apply_num_op_sum_evolution(
             self.vec,
             self.orbital_energies,

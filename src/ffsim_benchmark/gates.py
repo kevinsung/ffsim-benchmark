@@ -51,7 +51,7 @@ class GatesBenchmark:
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
 
-    def time_apply_num_op_sum_evolution(self, *_):
+    def time_apply_num_op_sum_evolution_ffsim(self, *_):
         ffsim.apply_num_op_sum_evolution(
             self.vec,
             self.orbital_energies,
@@ -61,7 +61,7 @@ class GatesBenchmark:
             copy=False,
         )
 
-    def time_apply_diag_coulomb_evolution(self, *_):
+    def time_apply_diag_coulomb_evolution_ffsim(self, *_):
         ffsim.apply_diag_coulomb_evolution(
             self.vec,
             self.diag_coulomb_mat,
@@ -71,7 +71,7 @@ class GatesBenchmark:
             copy=False,
         )
 
-    def time_apply_givens_rotation(self, *_):
+    def time_apply_givens_rotation_ffsim(self, *_):
         ffsim.apply_givens_rotation(
             self.vec,
             theta=1.0,
@@ -81,7 +81,7 @@ class GatesBenchmark:
             copy=False,
         )
 
-    def time_apply_num_interaction(self, *_):
+    def time_apply_num_interaction_ffsim(self, *_):
         ffsim.apply_num_interaction(
             self.vec,
             theta=1.0,
@@ -91,7 +91,7 @@ class GatesBenchmark:
             copy=False,
         )
 
-    def time_apply_num_num_interaction(self, *_):
+    def time_apply_num_num_interaction_ffsim(self, *_):
         ffsim.apply_num_num_interaction(
             self.vec,
             theta=1.0,
@@ -101,7 +101,7 @@ class GatesBenchmark:
             copy=False,
         )
 
-    def time_apply_on_site_interaction(self, *_):
+    def time_apply_on_site_interaction_ffsim(self, *_):
         ffsim.apply_on_site_interaction(
             self.vec,
             theta=1.0,
@@ -111,7 +111,7 @@ class GatesBenchmark:
             copy=False,
         )
 
-    def time_apply_num_op_prod_interaction(self, *_):
+    def time_apply_num_op_prod_interaction_ffsim(self, *_):
         ffsim.apply_num_op_prod_interaction(
             self.vec,
             theta=1.0,
@@ -121,7 +121,7 @@ class GatesBenchmark:
             copy=False,
         )
 
-    def time_apply_tunneling_interaction(self, *_):
+    def time_apply_tunneling_interaction_ffsim(self, *_):
         ffsim.apply_tunneling_interaction(
             self.vec,
             theta=1.0,

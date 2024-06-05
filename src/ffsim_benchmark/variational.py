@@ -53,7 +53,7 @@ class UCJBenchmark:
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
 
-    def time_ucj_spin_balanced(self, *_):
+    def time_ucj_spin_balanced_ffsim(self, *_):
         ffsim.apply_unitary(
             self.vec,
             self.ucj_op_spin_balanced,
@@ -62,7 +62,7 @@ class UCJBenchmark:
             copy=False,
         )
 
-    def time_ucj_spin_unbalanced(self, *_):
+    def time_ucj_spin_unbalanced_ffsim(self, *_):
         ffsim.apply_unitary(
             self.vec,
             self.ucj_op_spin_unbalanced,
@@ -71,7 +71,7 @@ class UCJBenchmark:
             copy=False,
         )
 
-    def time_ucj_spinless(self, *_):
+    def time_ucj_spinless_ffsim(self, *_):
         ffsim.apply_unitary(
             self.vec,
             self.ucj_op_spinless,
@@ -111,7 +111,7 @@ class HopGateAnsatzBenchmark:
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
 
-    def time_hop_gate_ansatz(self, *_):
+    def time_hop_gate_ansatz_ffsim(self, *_):
         ffsim.apply_unitary(
             self.vec, self.operator, norb=self.norb, nelec=self.nelec, copy=False
         )

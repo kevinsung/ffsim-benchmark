@@ -45,7 +45,7 @@ class RustBenchmark:
         self.slice1 = indices[: len(indices) // 2]
         self.slice2 = indices[len(indices) // 2 :]
 
-    def time_apply_givens_rotation_in_place_python(self, *_):
+    def time_apply_givens_rotation_in_place_python_ffsim(self, *_):
         apply_givens_rotation_in_place_slow(
             self.vec_as_mat,
             c=0.5,
@@ -54,7 +54,7 @@ class RustBenchmark:
             slice2=self.slice2,
         )
 
-    def time_apply_givens_rotation_in_place_rust(self, *_):
+    def time_apply_givens_rotation_in_place_rust_ffsim(self, *_):
         apply_givens_rotation_in_place(
             self.vec_as_mat,
             c=0.5,
