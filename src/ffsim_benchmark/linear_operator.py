@@ -33,14 +33,22 @@ class LinearOperatorBenchmark:
         nocc = int(norb * filling_fraction)
         self.nelec = (nocc, nocc)
 
+        # initialize ffsim cache
+        ffsim.init_cache(self.norb, self.nelec)
+
         # initialize test objects
         rng = np.random.default_rng()
-        self.vec = ffsim.hartree_fock_state(self.norb, self.nelec)
+        self.vec = ffsim.random.random_state_vector(
+            ffsim.dim(self.norb, self.nelec), seed=rng
+        )
+
+        # MolecularHamiltonian
         one_body_tensor = ffsim.random.random_hermitian(norb, seed=rng)
         two_body_tensor = ffsim.random.random_two_body_tensor(
             norb, seed=rng, dtype=float
         )
         constant = rng.standard_normal()
+        # Complex
         mol_hamiltonian = ffsim.MolecularHamiltonian(
             one_body_tensor=one_body_tensor,
             two_body_tensor=two_body_tensor,
@@ -49,9 +57,62 @@ class LinearOperatorBenchmark:
         self.mol_hamiltonian_linop = ffsim.linear_operator(
             mol_hamiltonian, norb=norb, nelec=self.nelec
         )
+        # Real
+        mol_hamiltonian_real = ffsim.MolecularHamiltonian(
+            one_body_tensor=one_body_tensor.real,
+            two_body_tensor=two_body_tensor,
+            constant=constant,
+        )
+        self.mol_hamiltonian_real_linop = ffsim.linear_operator(
+            mol_hamiltonian_real, norb=norb, nelec=self.nelec
+        )
 
-        # initialize ffsim cache
-        ffsim.init_cache(self.norb, self.nelec)
+        # DoubleFactorizedHamiltonian
+        n_reps = 3
+        one_body_tensor = ffsim.random.random_hermitian(norb, seed=rng)
+        diag_coulomb_mats = np.stack(
+            [
+                ffsim.random.random_real_symmetric_matrix(norb, seed=rng)
+                for _ in range(n_reps)
+            ]
+        )
+        orbital_rotations = np.stack(
+            [ffsim.random.random_unitary(norb, seed=rng) for _ in range(n_reps)]
+        )
+        constant = rng.standard_normal()
+        df_hamiltonian = ffsim.DoubleFactorizedHamiltonian(
+            one_body_tensor=one_body_tensor,
+            diag_coulomb_mats=diag_coulomb_mats,
+            orbital_rotations=orbital_rotations,
+            constant=constant,
+        )
+        self.df_hamiltonian_linop = ffsim.linear_operator(
+            df_hamiltonian, norb=norb, nelec=self.nelec
+        )
 
-    def time_molecular_hamiltonian_ffsim(self, *_):
+        # DiagonalCoulombHamiltonian
+        one_body_tensor = ffsim.random.random_hermitian(norb, seed=rng)
+        diag_coulomb_mat_aa = ffsim.random.random_real_symmetric_matrix(norb, seed=rng)
+        diag_coulomb_mat_ab = ffsim.random.random_real_symmetric_matrix(norb, seed=rng)
+        diag_coulomb_mats = np.stack([diag_coulomb_mat_aa, diag_coulomb_mat_ab])
+        constant = rng.standard_normal()
+        dc_hamiltonian = ffsim.DiagonalCoulombHamiltonian(
+            one_body_tensor=one_body_tensor,
+            diag_coulomb_mats=diag_coulomb_mats,
+            constant=constant,
+        )
+        self.dc_hamiltonian_linop = ffsim.linear_operator(
+            dc_hamiltonian, norb=norb, nelec=self.nelec
+        )
+
+    def time_molecular_hamiltonian_complex_ffsim(self, *_):
         _ = self.mol_hamiltonian_linop @ self.vec
+
+    def time_molecular_hamiltonian_real_ffsim(self, *_):
+        _ = self.mol_hamiltonian_real_linop @ self.vec
+
+    def time_double_factorized_hamiltonian_ffsim(self, *_):
+        _ = self.df_hamiltonian_linop @ self.vec
+
+    def time_diagonal_coulomb_hamiltonian_ffsim(self, *_):
+        _ = self.dc_hamiltonian_linop @ self.vec
