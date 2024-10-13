@@ -10,7 +10,7 @@ description = "Benchmarks for ffsim"
 dependencies = ["ffsim", "fqe", "qiskit-aer"]
 
 [project.optional-dependencies]
-dev = ["asv", "mypy", "pytest", "ruff == 0.4.4"]
+dev = ["asv", "mypy", "pytest", "ruff == 0.6.2"]
 
 [tool.ruff]
 include = [
