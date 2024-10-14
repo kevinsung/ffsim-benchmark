@@ -30,8 +30,8 @@ class OrbitalRotationBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8, 12),
-        (0.25, 0.5),
+        (4, 8, 12, 16),
+        (0.25,),
     ]
 
     def setup(self, norb: int, filling_fraction: float):

@@ -17,12 +17,19 @@ from ffsim_benchmark.util.random import random_fermion_operator
 class FermionOperatorBenchmark:
     """Benchmark FermionOperator."""
 
-    def setup(self):
-        self.op_ffsim = random_fermion_operator(norb=50, n_terms=100, seed=4142)
+    param_names = [
+        "n_terms",
+    ]
+    params = [
+        (100, 1_000, 10_000, 100_000),
+    ]
+
+    def setup(self, n_terms: int):
+        self.op_ffsim = random_fermion_operator(norb=50, n_terms=n_terms, seed=4142)
         self.op_openfermion = ffsim_op_to_openfermion_op(self.op_ffsim)
 
-    def time_normal_order_ffsim(self):
+    def time_normal_order_ffsim(self, *_):
         self.op_ffsim.normal_ordered()
 
-    def time_normal_order_openfermion(self):
+    def time_normal_order_openfermion(self, *_):
         of.normal_ordered(self.op_openfermion)
