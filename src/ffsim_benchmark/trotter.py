@@ -20,8 +20,6 @@ from qiskit_aer import AerSimulator
 
 import ffsim
 
-from .qiskit_sim.trotter import AsymmetricLowRankTrotterStepJW, simulate_trotter
-
 OMP_NUM_THREADS = int(os.environ.get("OMP_NUM_THREADS", 1))
 
 
@@ -51,7 +49,7 @@ class TrotterBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8, 12, 16),
+        (4, 8, 12),
         (0.25,),
     ]
 
@@ -106,15 +104,12 @@ class TrotterBenchmark:
                 nelec=self.nelec,
             )
             qubits = QuantumRegister(2 * norb)
-            trotter_step = AsymmetricLowRankTrotterStepJW(qubits, self.df_hamiltonian)
             circuit = QuantumCircuit(qubits)
             circuit.set_statevector(initial_state)
-            for instruction in simulate_trotter(
-                trotter_step,
-                self.time,
-                n_steps=self.n_steps,
-            ):
-                circuit.append(instruction)
+            gate = ffsim.qiskit.SimulateTrotterDoubleFactorizedJW(
+                self.df_hamiltonian, time=self.time, n_steps=self.n_steps, order=0
+            )
+            circuit.append(gate, qubits)
             circuit.save_state()
             self.circuit = transpile(circuit, self.aer_sim)
 
