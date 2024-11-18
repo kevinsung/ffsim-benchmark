@@ -31,7 +31,7 @@ class OrbitalRotationBenchmark:
     ]
     params = [
         (4, 8, 12, 16),
-        (0.25,),
+        (0.25, 0.5),
     ]
 
     def setup(self, norb: int, filling_fraction: float):

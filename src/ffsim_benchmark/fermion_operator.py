@@ -25,7 +25,7 @@ class FermionOperatorBenchmark:
     ]
 
     def setup(self, n_terms: int):
-        self.op_ffsim = random_fermion_operator(norb=50, n_terms=n_terms, seed=4142)
+        self.op_ffsim = random_fermion_operator(norb=100, n_terms=n_terms, seed=4142)
         self.op_openfermion = ffsim_op_to_openfermion_op(self.op_ffsim)
 
     def time_normal_order_ffsim(self, *_):
