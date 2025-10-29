@@ -21,7 +21,8 @@
         "req": {
             "fqe": [],
             "openfermion": [],
-            "qiskit-aer": []
+            "qiskit-aer": [],
+            "puccinialin": []
         },
         "env_nobuild": {
             "RAYON_NUM_THREADS": "1",
