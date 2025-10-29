@@ -35,7 +35,7 @@ class RustBenchmark:
 
         rng = np.random.default_rng()
 
-        self.vec = ffsim.random.random_statevector(
+        self.vec = ffsim.random.random_state_vector(
             ffsim.dim(self.norb, self.nelec), seed=rng
         )
         dim_a, dim_b = ffsim.dims(self.norb, self.nelec)

@@ -29,7 +29,7 @@ def test_consistent_results():
     n_terms = 10
     op_ffsim = random_fermion_hamiltonian(norb=norb, n_terms=n_terms, seed=rng)
     op_openfermion = ffsim_op_to_openfermion_op(op_ffsim)
-    vec_ffsim = ffsim.random.random_statevector(ffsim.dim(norb, nelec), seed=rng)
+    vec_ffsim = ffsim.random.random_state_vector(ffsim.dim(norb, nelec), seed=rng)
     wfn = ffsim_vec_to_fqe_wfn(vec_ffsim, norb, nelec)
     result_ffsim = ffsim.linear_operator(op_ffsim, norb=norb, nelec=nelec) @ vec_ffsim
     result_openfermion = fqe_wfn_to_ffsim_vec(wfn.apply(op_openfermion), nelec)

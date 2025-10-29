@@ -42,7 +42,7 @@ class OrbitalRotationBenchmark:
 
         # initialize test objects
         rng = np.random.default_rng()
-        self.vec = ffsim.random.random_statevector(
+        self.vec = ffsim.random.random_state_vector(
             ffsim.dim(self.norb, self.nelec), seed=rng
         )
         self.orbital_rotation = ffsim.random.random_unitary(norb, seed=rng)

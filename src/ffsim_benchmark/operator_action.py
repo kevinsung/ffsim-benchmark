@@ -41,7 +41,7 @@ class OperatorActionBenchmark:
         self.nelec = (nocc, nocc)
 
         # initialize test objects
-        self.vec_ffsim = ffsim.random.random_statevector(
+        self.vec_ffsim = ffsim.random.random_state_vector(
             ffsim.dim(self.norb, self.nelec)
         )
         self.wfn_fqe = ffsim_vec_to_fqe_wfn(
