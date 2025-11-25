@@ -10,6 +10,7 @@
 
 """Benchmarks for operator action."""
 
+import fqe
 import numpy as np
 
 import ffsim
@@ -49,6 +50,7 @@ class OperatorActionBenchmark:
         )
         self.op_ffsim = random_fermion_hamiltonian(norb=norb, n_terms=50, seed=rng)
         self.op_openfermion = ffsim_op_to_openfermion_op(self.op_ffsim)
+        self.op_fqe = fqe.get_sparse_hamiltonian(self.op_openfermion)
         self.linop_ffsim = ffsim.linear_operator(
             self.op_ffsim, norb=self.norb, nelec=self.nelec
         )
@@ -60,4 +62,4 @@ class OperatorActionBenchmark:
         _ = self.linop_ffsim @ self.vec_ffsim
 
     def time_operator_action_fqe(self, *_):
-        _ = self.wfn_fqe.apply(self.op_openfermion)
+        _ = self.wfn_fqe.apply(self.op_fqe)
