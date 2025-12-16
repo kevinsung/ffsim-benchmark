@@ -10,7 +10,6 @@
 
 from importlib.resources import as_file, files
 
-import fqe
 import numpy as np
 
 import ffsim
@@ -53,7 +52,6 @@ class MolecularHamiltonianActionComplexBenchmark:
         )
 
         self.op_fqe = ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
-        self.op_fqe_sparse = fqe.get_sparse_hamiltonian(self.op_fqe)
 
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
@@ -63,9 +61,6 @@ class MolecularHamiltonianActionComplexBenchmark:
 
     def time_mol_ham_action_complex_fqe(self, *_):
         _ = self.wfn_fqe.apply(self.op_fqe)
-
-    def time_mol_ham_action_complex_fqe_sparse(self, *_):
-        _ = self.wfn_fqe.apply(self.op_fqe_sparse)
 
 
 class MolecularHamiltonianActionRealBenchmark:
@@ -103,7 +98,6 @@ class MolecularHamiltonianActionRealBenchmark:
         )
 
         self.op_fqe = ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
-        self.op_fqe_sparse = fqe.get_sparse_hamiltonian(self.op_fqe)
 
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
@@ -113,9 +107,6 @@ class MolecularHamiltonianActionRealBenchmark:
 
     def time_mol_ham_action_real_fqe(self, *_):
         _ = self.wfn_fqe.apply(self.op_fqe)
-
-    def time_mol_ham_action_real_fqe_sparse(self, *_):
-        _ = self.wfn_fqe.apply(self.op_fqe_sparse)
 
 
 class MolecularHamiltonianActionN2Benchmark:
@@ -142,7 +133,6 @@ class MolecularHamiltonianActionN2Benchmark:
         self.linop_ffsim = ffsim.linear_operator(mol_ham, norb=norb, nelec=nelec)
 
         self.op_fqe = ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
-        self.op_fqe_sparse = fqe.get_sparse_hamiltonian(self.op_fqe)
 
         # initialize ffsim cache
         ffsim.init_cache(norb, nelec)
@@ -152,6 +142,3 @@ class MolecularHamiltonianActionN2Benchmark:
 
     def time_mol_ham_action_n2_fqe(self, *_):
         _ = self.wfn_fqe.apply(self.op_fqe)
-
-    def time_mol_ham_action_n2_fqe_sparse(self, *_):
-        _ = self.wfn_fqe.apply(self.op_fqe_sparse)
