@@ -10,6 +10,7 @@
 
 from importlib.resources import as_file, files
 
+import fqe
 import numpy as np
 
 import ffsim
@@ -51,7 +52,9 @@ class MolecularHamiltonianActionComplexBenchmark:
             mol_ham, norb=self.norb, nelec=self.nelec
         )
 
-        self.op_fqe = ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
+        self.op_fqe = fqe.build_hamiltonian(
+            ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
+        )
 
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
@@ -97,7 +100,9 @@ class MolecularHamiltonianActionRealBenchmark:
             mol_ham, norb=self.norb, nelec=self.nelec
         )
 
-        self.op_fqe = ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
+        self.op_fqe = fqe.build_hamiltonian(
+            ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
+        )
 
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
@@ -132,7 +137,9 @@ class MolecularHamiltonianActionN2Benchmark:
         mol_ham = mol_data.hamiltonian
         self.linop_ffsim = ffsim.linear_operator(mol_ham, norb=norb, nelec=nelec)
 
-        self.op_fqe = ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
+        self.op_fqe = fqe.build_hamiltonian(
+            ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
+        )
 
         # initialize ffsim cache
         ffsim.init_cache(norb, nelec)
