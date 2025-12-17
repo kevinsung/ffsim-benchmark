@@ -21,7 +21,7 @@ from ffsim_benchmark.util.convert import (
 
 
 class MolecularHamiltonianActionComplexBenchmark:
-    """Benchmark molecular Hamiltonian operator action."""
+    """Benchmark molecular Hamiltonian operator action with complex numbers."""
 
     param_names = [
         "norb",
@@ -67,7 +67,7 @@ class MolecularHamiltonianActionComplexBenchmark:
 
 
 class MolecularHamiltonianActionRealBenchmark:
-    """Benchmark molecular Hamiltonian operator action."""
+    """Benchmark molecular Hamiltonian operator action with real numbers."""
 
     param_names = [
         "norb",
@@ -88,7 +88,7 @@ class MolecularHamiltonianActionRealBenchmark:
 
         # initialize test objects
         self.vec_ffsim = ffsim.random.random_state_vector(
-            ffsim.dim(self.norb, self.nelec), seed=rng
+            ffsim.dim(self.norb, self.nelec), seed=rng, dtype=float
         )
         self.wfn_fqe = ffsim_vec_to_fqe_wfn(
             self.vec_ffsim, norb=self.norb, nelec=self.nelec
@@ -115,7 +115,7 @@ class MolecularHamiltonianActionRealBenchmark:
 
 
 class MolecularHamiltonianActionN2Benchmark:
-    """Benchmark molecular Hamiltonian operator action."""
+    """Benchmark molecular Hamiltonian operator action on an N2 example."""
 
     def setup(self):
         rng = np.random.default_rng(215196083997839770748582168260368828406)
