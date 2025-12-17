@@ -9,11 +9,11 @@
 # that they have been altered from the originals.
 
 import numpy as np
-
-import ffsim
 from ffsim._lib import apply_givens_rotation_in_place
 from ffsim._slow.gates.orbital_rotation import apply_givens_rotation_in_place_slow
 from ffsim.gates.orbital_rotation import _zero_one_subspace_indices
+
+import ffsim
 
 
 class RustBenchmark:

@@ -14,10 +14,7 @@ import fqe
 import numpy as np
 
 import ffsim
-from ffsim_benchmark.util.convert import (
-    ffsim_op_to_openfermion_op,
-    ffsim_vec_to_fqe_wfn,
-)
+from ffsim_benchmark.util.convert import ffsim_vec_to_fqe_wfn
 
 
 class MolecularHamiltonianActionRealBenchmark:
