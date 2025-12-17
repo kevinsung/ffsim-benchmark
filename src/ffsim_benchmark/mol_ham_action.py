@@ -60,9 +60,6 @@ class MolecularHamiltonianActionRealBenchmark:
                 -0.5 * mol_ham.two_body_tensor.transpose(0, 3, 1, 2),
             )
         )
-        self.op_fqe_general = fqe.build_hamiltonian(
-            ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
-        )
 
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
@@ -72,9 +69,6 @@ class MolecularHamiltonianActionRealBenchmark:
 
     def time_mol_ham_action_real_fqe_restricted(self, *_):
         _ = self.wfn_fqe.apply(self.op_fqe_restricted)
-
-    def time_mol_ham_action_real_fqe_general(self, *_):
-        _ = self.wfn_fqe.apply(self.op_fqe_general)
 
 
 class MolecularHamiltonianActionComplexBenchmark:
@@ -109,18 +103,21 @@ class MolecularHamiltonianActionComplexBenchmark:
             mol_ham, norb=self.norb, nelec=self.nelec
         )
 
-        self.op_fqe = fqe.build_hamiltonian(
-            ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
+        self.op_fqe_restricted = fqe.get_restricted_hamiltonian(
+            (
+                mol_ham.one_body_tensor,
+                -0.5 * mol_ham.two_body_tensor.transpose(0, 3, 1, 2),
+            )
         )
 
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
 
-    def time_mol_ham_action_complex_ffsim(self, *_):
+    def time_mol_ham_action_real_ffsim(self, *_):
         _ = self.linop_ffsim @ self.vec_ffsim
 
-    def time_mol_ham_action_complex_fqe(self, *_):
-        _ = self.wfn_fqe.apply(self.op_fqe)
+    def time_mol_ham_action_real_fqe_restricted(self, *_):
+        _ = self.wfn_fqe.apply(self.op_fqe_restricted)
 
 
 class MolecularHamiltonianActionN2Benchmark:
@@ -146,8 +143,11 @@ class MolecularHamiltonianActionN2Benchmark:
         mol_ham = mol_data.hamiltonian
         self.linop_ffsim = ffsim.linear_operator(mol_ham, norb=norb, nelec=nelec)
 
-        self.op_fqe = fqe.build_hamiltonian(
-            ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
+        self.op_fqe_restricted = fqe.get_restricted_hamiltonian(
+            (
+                mol_ham.one_body_tensor,
+                -0.5 * mol_ham.two_body_tensor.transpose(0, 3, 1, 2),
+            )
         )
 
         # initialize ffsim cache
@@ -156,5 +156,5 @@ class MolecularHamiltonianActionN2Benchmark:
     def time_mol_ham_action_n2_ffsim(self, *_):
         _ = self.linop_ffsim @ self.vec_ffsim
 
-    def time_mol_ham_action_n2_fqe(self, *_):
-        _ = self.wfn_fqe.apply(self.op_fqe)
+    def time_mol_ham_action_real_fqe_restricted(self, *_):
+        _ = self.wfn_fqe.apply(self.op_fqe_restricted)
