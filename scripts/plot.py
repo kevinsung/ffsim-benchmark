@@ -39,8 +39,8 @@ colors = {
     "ffsim": "#0f62fe",
 }
 fmts = {
-    "Aer": "v:",
-    "FQE": "s-.",
+    "Aer": "v-.",
+    "FQE": "s:",
     "ffsim": "o--",
 }
 
@@ -50,10 +50,11 @@ def plot_results(
     norb_range: list[int],
     title: str,
     filename: str,
+    ylim: tuple[float, float] | None = None,
     plots_dir: str = "plots",
 ) -> None:
-    fig, axes = plt.subplots(1, 2, layout="constrained")
-    # fig.subplots_adjust(wspace=0.25)
+    fig, axes = plt.subplots(1, 2)
+    fig.subplots_adjust(wspace=0.25)
 
     benchmark_results_single_threaded = {}
     benchmark_results_multi_threaded = {}
@@ -103,8 +104,8 @@ def plot_results(
             for label, times in benchmark_results_multi_threaded.items()
         }
 
-        for ((label_single, data_single), (label_multi, data_multi)), fmt in zip(
-            zip(times_single_threaded.items(), times_multi_threaded.items()), fmts
+        for (label_single, data_single), (label_multi, data_multi) in zip(
+            times_single_threaded.items(), times_multi_threaded.items()
         ):
             times, stats_q_25, stats_q_75 = zip(*data_single)
             yerr_a = [t - x for t, x in zip(times, stats_q_25)]
@@ -132,13 +133,30 @@ def plot_results(
 
         ax.set_xticks(norb_range)
         ax.set_yscale("log")
-        ax.set_xlabel("Number of orbitals")
+        if ylim:
+            ax.set_ylim(*ylim)
+        ax.set_xlabel("# orbitals")
         ax.set_title(f"filling 1/{filling_denominator}")
+
     axes[0].set_ylabel("Time (s)")
-    axes[0].legend(loc="upper left")
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    # Place legend centered below the entire figure
+    fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        # bbox_to_anchor=(0.5, -0.02),  # slight negative y to sit just below
+        ncol=len(benchmark_names),  # tweak based on how many entries you have
+        # frameon=False,
+    )
+
+    # Reserve extra bottom margin for the legend
+    fig.subplots_adjust(bottom=0.22)
+
     fig.suptitle(f"{title}", size="x-large")
     os.makedirs(plots_dir, exist_ok=True)
-    plt.savefig(f"{plots_dir}/{filename}.pdf")
+    plt.savefig(f"{plots_dir}/{filename}.pdf", bbox_inches="tight")
 
 
 benchmark_names = {
@@ -153,6 +171,7 @@ plot_results(
     benchmark_names=benchmark_names,
     norb_range=norb_range,
     title=title,
+    ylim=(5e-5, 1e2),
     filename=filename,
 )
 
@@ -169,6 +188,7 @@ plot_results(
     benchmark_names=benchmark_names,
     norb_range=norb_range,
     title=title,
+    ylim=(1e-3, 1e3),
     filename=filename,
 )
 
@@ -184,6 +204,7 @@ plot_results(
     benchmark_names=benchmark_names,
     norb_range=norb_range,
     title=title,
+    ylim=(1e-4, 2e2),
     filename=filename,
 )
 
@@ -198,5 +219,6 @@ plot_results(
     benchmark_names=benchmark_names,
     norb_range=norb_range,
     title=title,
+    ylim=(5e-5, 2e3),
     filename=filename,
 )
