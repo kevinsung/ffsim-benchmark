@@ -20,52 +20,6 @@ from ffsim_benchmark.util.convert import (
 )
 
 
-class MolecularHamiltonianActionComplexBenchmark:
-    """Benchmark molecular Hamiltonian operator action with complex numbers."""
-
-    param_names = [
-        "norb",
-        "filling_fraction",
-    ]
-    params = [
-        (4, 8, 12, 16),
-        (0.25,),
-    ]
-
-    def setup(self, norb: int, filling_fraction: float):
-        rng = np.random.default_rng(215196083997839770748582168260368828406)
-
-        # set benchmark parameters
-        self.norb = norb
-        nocc = int(norb * filling_fraction)
-        self.nelec = (nocc, nocc)
-
-        # initialize test objects
-        self.vec_ffsim = ffsim.random.random_state_vector(
-            ffsim.dim(self.norb, self.nelec), seed=rng
-        )
-        self.wfn_fqe = ffsim_vec_to_fqe_wfn(
-            self.vec_ffsim, norb=self.norb, nelec=self.nelec
-        )
-        mol_ham = ffsim.random.random_molecular_hamiltonian(self.norb, seed=rng)
-        self.linop_ffsim = ffsim.linear_operator(
-            mol_ham, norb=self.norb, nelec=self.nelec
-        )
-
-        self.op_fqe = fqe.build_hamiltonian(
-            ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
-        )
-
-        # initialize ffsim cache
-        ffsim.init_cache(self.norb, self.nelec)
-
-    def time_mol_ham_action_complex_ffsim(self, *_):
-        _ = self.linop_ffsim @ self.vec_ffsim
-
-    def time_mol_ham_action_complex_fqe(self, *_):
-        _ = self.wfn_fqe.apply(self.op_fqe)
-
-
 class MolecularHamiltonianActionRealBenchmark:
     """Benchmark molecular Hamiltonian operator action with real numbers."""
 
@@ -111,6 +65,52 @@ class MolecularHamiltonianActionRealBenchmark:
         _ = self.linop_ffsim @ self.vec_ffsim
 
     def time_mol_ham_action_real_fqe(self, *_):
+        _ = self.wfn_fqe.apply(self.op_fqe)
+
+
+class MolecularHamiltonianActionComplexBenchmark:
+    """Benchmark molecular Hamiltonian operator action with complex numbers."""
+
+    param_names = [
+        "norb",
+        "filling_fraction",
+    ]
+    params = [
+        (4, 8, 12, 16),
+        (0.25,),
+    ]
+
+    def setup(self, norb: int, filling_fraction: float):
+        rng = np.random.default_rng(215196083997839770748582168260368828406)
+
+        # set benchmark parameters
+        self.norb = norb
+        nocc = int(norb * filling_fraction)
+        self.nelec = (nocc, nocc)
+
+        # initialize test objects
+        self.vec_ffsim = ffsim.random.random_state_vector(
+            ffsim.dim(self.norb, self.nelec), seed=rng
+        )
+        self.wfn_fqe = ffsim_vec_to_fqe_wfn(
+            self.vec_ffsim, norb=self.norb, nelec=self.nelec
+        )
+        mol_ham = ffsim.random.random_molecular_hamiltonian(self.norb, seed=rng)
+        self.linop_ffsim = ffsim.linear_operator(
+            mol_ham, norb=self.norb, nelec=self.nelec
+        )
+
+        self.op_fqe = fqe.build_hamiltonian(
+            ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
+        )
+
+        # initialize ffsim cache
+        ffsim.init_cache(self.norb, self.nelec)
+
+    def time_mol_ham_action_complex_ffsim(self, *_):
+        _ = self.linop_ffsim @ self.vec_ffsim
+
+    def time_mol_ham_action_complex_fqe(self, *_):
         _ = self.wfn_fqe.apply(self.op_fqe)
 
 
