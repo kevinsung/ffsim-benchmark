@@ -54,7 +54,13 @@ class MolecularHamiltonianActionRealBenchmark:
             mol_ham, norb=self.norb, nelec=self.nelec
         )
 
-        self.op_fqe = fqe.build_hamiltonian(
+        self.op_fqe_restricted = fqe.get_restricted_hamiltonian(
+            (
+                mol_ham.one_body_tensor,
+                -0.5 * mol_ham.two_body_tensor.transpose(0, 3, 1, 2),
+            )
+        )
+        self.op_fqe_general = fqe.build_hamiltonian(
             ffsim_op_to_openfermion_op(ffsim.fermion_operator(mol_ham))
         )
 
@@ -64,8 +70,11 @@ class MolecularHamiltonianActionRealBenchmark:
     def time_mol_ham_action_real_ffsim(self, *_):
         _ = self.linop_ffsim @ self.vec_ffsim
 
-    def time_mol_ham_action_real_fqe(self, *_):
-        _ = self.wfn_fqe.apply(self.op_fqe)
+    def time_mol_ham_action_real_fqe_restricted(self, *_):
+        _ = self.wfn_fqe.apply(self.op_fqe_restricted)
+
+    def time_mol_ham_action_real_fqe_general(self, *_):
+        _ = self.wfn_fqe.apply(self.op_fqe_general)
 
 
 class MolecularHamiltonianActionComplexBenchmark:
