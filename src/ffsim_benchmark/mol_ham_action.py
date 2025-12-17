@@ -42,7 +42,7 @@ class MolecularHamiltonianActionRealBenchmark:
 
         # initialize test objects
         self.vec_ffsim = ffsim.random.random_state_vector(
-            ffsim.dim(self.norb, self.nelec), seed=rng, dtype=float
+            ffsim.dim(self.norb, self.nelec), seed=rng
         )
         self.wfn_fqe = ffsim_vec_to_fqe_wfn(
             self.vec_ffsim, norb=self.norb, nelec=self.nelec
