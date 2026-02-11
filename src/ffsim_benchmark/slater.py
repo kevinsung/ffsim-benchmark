@@ -13,7 +13,7 @@ import numpy as np
 import ffsim
 
 
-class SampleSlaterDeterminantBenchmark:
+class SampleSlaterBenchmark:
     """Benchmark sampling Slater determinant."""
 
     param_names = [
@@ -21,7 +21,7 @@ class SampleSlaterDeterminantBenchmark:
         "filling_fraction",
     ]
     params = [
-        (32, 64, 96),
+        (100, 200),
         (0.25, 0.5),
     ]
 
@@ -29,23 +29,20 @@ class SampleSlaterDeterminantBenchmark:
         # set benchmark parameters
         self.norb = norb
         self.nelec = int(norb * filling_fraction)
-        self.shots = 1000
+        self.shots = 1_000
 
         # initialize test objects
         self.rng = np.random.default_rng(1889)
-        orbital_rotation = ffsim.random.random_unitary(norb, seed=self.rng)
-        occupied_orbitals = ffsim.testing.random_occupied_orbitals(
+        self.orbital_rotation = ffsim.random.random_unitary(norb, seed=self.rng)
+        self.occupied_orbitals = ffsim.testing.random_occupied_orbitals(
             self.norb, self.nelec, seed=self.rng
-        )
-        self.rdm = ffsim.slater_determinant_rdms(
-            norb, occupied_orbitals, orbital_rotation
         )
 
     def time_sample_slater_determinant_ffsim(self, *_):
-        _ = ffsim.sample_slater_determinant(
-            self.rdm,
+        _ = ffsim.sample_slater(
             self.norb,
-            self.nelec,
+            self.occupied_orbitals,
+            self.orbital_rotation,
             shots=self.shots,
             bitstring_type=ffsim.BitstringType.INT,
             seed=self.rng,
