@@ -12,6 +12,7 @@ import os
 
 import fqe
 import numpy as np
+import scipy.linalg
 from asv_runner.benchmarks.mark import skip_for_params
 from fqe.hamiltonians.restricted_hamiltonian import RestrictedHamiltonian
 from qiskit import QuantumCircuit, QuantumRegister, transpile
@@ -20,28 +21,6 @@ from qiskit_aer import AerSimulator
 import ffsim
 
 OMP_NUM_THREADS = int(os.environ.get("OMP_NUM_THREADS", 1))
-
-
-def num_op_sum_evo_circuit(
-    coeffs: np.ndarray,
-    initial_state: np.ndarray,
-    time: float,
-    norb: int,
-    orbital_rotation: np.ndarray | None = None,
-):
-    qubits = QuantumRegister(2 * norb)
-    circuit = QuantumCircuit(qubits)
-    circuit.set_statevector(initial_state)
-    if orbital_rotation is not None:
-        circuit.append(
-            ffsim.qiskit.OrbitalRotationJW(norb, orbital_rotation.T.conj()), qubits
-        )
-    for q, energy in zip(qubits, coeffs):
-        circuit.rz(-energy * time, q)
-    if orbital_rotation is not None:
-        circuit.append(ffsim.qiskit.OrbitalRotationJW(norb, orbital_rotation), qubits)
-    circuit.save_state()
-    return circuit
 
 
 class QuadHamEvoBenchmark:
@@ -68,9 +47,6 @@ class QuadHamEvoBenchmark:
             ffsim.dim(self.norb, self.nelec), seed=rng
         )
         self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)
-        self.orbital_energies, self.orbital_rotation = np.linalg.eigh(
-            self.one_body_tensor
-        )
 
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
@@ -94,23 +70,21 @@ class QuadHamEvoBenchmark:
             initial_state = ffsim.qiskit.ffsim_vec_to_qiskit_vec(
                 self.vec, norb=norb, nelec=self.nelec
             )
-            circuit = num_op_sum_evo_circuit(
-                self.orbital_energies,
-                initial_state,
-                1.0,
-                norb=norb,
-                orbital_rotation=self.orbital_rotation,
-            )
+            evolution_mat = scipy.linalg.expm(-1j * self.one_body_tensor)
+            qubits = QuantumRegister(2 * norb)
+            circuit = QuantumCircuit(qubits)
+            circuit.set_statevector(initial_state)
+            circuit.append(ffsim.qiskit.OrbitalRotationJW(norb, evolution_mat), qubits)
+            circuit.save_state()
             self.quad_ham_evo_circuit = transpile(circuit, self.aer_sim)
 
     def time_quad_ham_evolution_ffsim(self, *_):
-        ffsim.apply_num_op_sum_evolution(
+        ffsim.apply_quad_ham_evolution(
             self.vec,
-            self.orbital_energies,
+            self.one_body_tensor,
             time=1.0,
             norb=self.norb,
             nelec=self.nelec,
-            orbital_rotation=self.orbital_rotation,
             copy=False,
         )
 

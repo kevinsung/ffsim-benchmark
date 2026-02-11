@@ -5,8 +5,8 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-ENV_SINGLE_THREADED = "724a6e0f-env-63d0c0e50daf914074f8c79983f4fd29"
-ENV_MULTI_THREADED = "724a6e0f-env-17fe83cba2670b64c2ccd91d3215b5b7"
+ENV_SINGLE_THREADED = "4e248554-env-63d0c0e50daf914074f8c79983f4fd29"
+ENV_MULTI_THREADED = "4e248554-env-17fe83cba2670b64c2ccd91d3215b5b7"
 
 with open(f".asv/results/drybiscuit/{ENV_SINGLE_THREADED}.json") as f:
     DATA_SINGLE_THREADED = json.load(f)
