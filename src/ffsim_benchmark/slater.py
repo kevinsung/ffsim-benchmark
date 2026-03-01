@@ -21,7 +21,7 @@ class SampleSlaterBenchmark:
         "filling_fraction",
     ]
     params = [
-        (100, 200),
+        (100, 500),
         (0.25, 0.5),
     ]
 
