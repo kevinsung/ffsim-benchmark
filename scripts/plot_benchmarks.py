@@ -131,6 +131,13 @@ def plot_results(
             ax.set_ylim(*ylim)
 
     axes[0].set_ylabel("Time (s)")
+    axes[-1].yaxis.set_label_position("right")
+    axes[-1].set_ylabel(
+        title,
+        rotation=270,
+        # labelpad=15,
+        va="bottom",
+    )
 
 
 fig, axes = plt.subplots(3, 2)
@@ -142,7 +149,7 @@ benchmark_names = {
     "FQE": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe",
     "ffsim": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_ffsim",
 }
-title = "Double factorized Trotter"
+title = "DF Trotter"
 plot_results(
     axes[0],
     benchmark_names=benchmark_names,
@@ -156,7 +163,7 @@ benchmark_names = {
     "FQE": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_fqe",
     "ffsim": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_ffsim",
 }
-title = "Quadratic Hamiltonian evolution"
+title = "Quad Ham"
 plot_results(
     axes[1],
     benchmark_names=benchmark_names,
@@ -169,7 +176,7 @@ benchmark_names = {
     "FQE": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_fqe_restricted",
     "ffsim": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_ffsim",
 }
-title = "Molecular Hamiltonian operator action"
+title = "Op action"
 plot_results(
     axes[2],
     benchmark_names=benchmark_names,
