@@ -4,6 +4,7 @@ requires = ["flit_core"]
 
 [project]
 name = "ffsim-benchmark"
+requires-python = ">=3.12"
 version = "0.0.0"
 description = "Benchmarks for ffsim"
 
