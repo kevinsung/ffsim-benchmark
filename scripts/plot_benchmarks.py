@@ -1,17 +1,46 @@
+import glob
 import itertools
 import json
 import os
+from datetime import datetime
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-ENV_SINGLE_THREADED = "4e248554-env-63d0c0e50daf914074f8c79983f4fd29"
-ENV_MULTI_THREADED = "4e248554-env-17fe83cba2670b64c2ccd91d3215b5b7"
 
-with open(f".asv/results/drybiscuit/{ENV_SINGLE_THREADED}.json") as f:
-    DATA_SINGLE_THREADED = json.load(f)
-with open(f".asv/results/drybiscuit/{ENV_MULTI_THREADED}.json") as f:
-    DATA_MULTI_THREADED = json.load(f)
+def find_result_data(results_dir: str, num_threads: int) -> dict:
+    candidates = []
+    for path in glob.glob(f"{results_dir}/*.json"):
+        if path.endswith("machine.json"):
+            continue
+        with open(path) as f:
+            data = json.load(f)
+        if int(data.get("env_vars", {}).get("OMP_NUM_THREADS", -1)) == num_threads:
+            candidates.append((data["date"], data))
+    if not candidates:
+        raise FileNotFoundError(
+            f"No result file found with OMP_NUM_THREADS={num_threads} in {results_dir}"
+        )
+    return max(candidates)[1]
+
+
+(machine,) = (
+    d["machine"]
+    for d in [json.load(open(p)) for p in glob.glob(".asv/results/*/machine.json")]
+)
+RESULTS_DIR = f".asv/results/{machine}"
+
+DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1)
+DATA_MULTI_THREADED = find_result_data(RESULTS_DIR, 6)
+print(f"Single threaded commit: {DATA_SINGLE_THREADED['commit_hash'][:8]}")
+print(
+    f"Single threaded date: {datetime.fromtimestamp(DATA_SINGLE_THREADED['date'] / 1000)}"
+)
+print(f"Multi threaded commit: {DATA_MULTI_THREADED['commit_hash'][:8]}")
+print(
+    f"Multi threaded date: {datetime.fromtimestamp(DATA_MULTI_THREADED['date'] / 1000)}"
+)
 
 assert (
     int(DATA_SINGLE_THREADED["env_vars"]["OMP_NUM_THREADS"])
@@ -212,5 +241,7 @@ fig.legend(
 # Reserve extra bottom margin for the legend
 fig.subplots_adjust(bottom=0.21)
 
-os.makedirs("plots", exist_ok=True)
-plt.savefig("plots/benchmark.pdf", bbox_inches="tight")
+filepath = Path("plots/benchmark.pdf")
+os.makedirs(filepath.parent, exist_ok=True)
+plt.savefig(filepath, bbox_inches="tight")
+print(f"Saved figure to {filepath}.")
