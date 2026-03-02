@@ -140,7 +140,11 @@ def plot_results(
     )
 
 
-fig, axes = plt.subplots(3, 2)
+fig, axes = plt.subplots(
+    3,
+    2,
+    # figsize=(8, 7),
+)
 fig.subplots_adjust(wspace=0.25)
 norb_range = [4, 8, 12, 16]
 
@@ -206,7 +210,7 @@ fig.legend(
 )
 
 # Reserve extra bottom margin for the legend
-fig.subplots_adjust(bottom=0.22)
+fig.subplots_adjust(bottom=0.21)
 
 os.makedirs("plots", exist_ok=True)
 plt.savefig("plots/benchmark.pdf", bbox_inches="tight")
