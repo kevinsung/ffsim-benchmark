@@ -108,21 +108,3 @@ class SampleSlaterBenchmark:
             mode="KuTa12",
             shots=self.shots,
         )
-
-    def time_sample_slater_real_vfx_dppy(self, *_):
-        _ = sample_slater_dppy(
-            self.norb,
-            self.occupied_orbitals,
-            self.orbital_rotation_real,
-            mode="vfx",
-            shots=self.shots,
-        )
-
-    def time_sample_slater_real_alpha_dppy(self, *_):
-        _ = sample_slater_dppy(
-            self.norb,
-            self.occupied_orbitals,
-            self.orbital_rotation_real,
-            mode="alpha",
-            shots=self.shots,
-        )
