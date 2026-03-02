@@ -21,7 +21,7 @@ class SampleSlaterBenchmark:
         "filling_fraction",
     ]
     params = [
-        (100, 500),
+        (50, 100, 200, 400),
         (0.25, 0.5),
     ]
 
@@ -32,17 +32,28 @@ class SampleSlaterBenchmark:
         self.shots = 1_000
 
         # initialize test objects
-        self.rng = np.random.default_rng(1889)
-        self.orbital_rotation = ffsim.random.random_unitary(norb, seed=self.rng)
+        self.rng = np.random.default_rng(238951493330509724797921217923308475371)
+        self.orbital_rotation_real = ffsim.random.random_orthogonal(norb, seed=self.rng)
+        self.orbital_rotation_complex = ffsim.random.random_unitary(norb, seed=self.rng)
         self.occupied_orbitals = ffsim.testing.random_occupied_orbitals(
             self.norb, self.nelec, seed=self.rng
         )
 
-    def time_sample_slater_determinant_ffsim(self, *_):
+    def time_sample_slater_determinant_real_ffsim(self, *_):
         _ = ffsim.sample_slater(
             self.norb,
             self.occupied_orbitals,
-            self.orbital_rotation,
+            self.orbital_rotation_real,
+            shots=self.shots,
+            bitstring_type=ffsim.BitstringType.INT,
+            seed=self.rng,
+        )
+
+    def time_sample_slater_determinant_complex_ffsim(self, *_):
+        _ = ffsim.sample_slater(
+            self.norb,
+            self.occupied_orbitals,
+            self.orbital_rotation_complex,
             shots=self.shots,
             bitstring_type=ffsim.BitstringType.INT,
             seed=self.rng,
