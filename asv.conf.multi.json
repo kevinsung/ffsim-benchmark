@@ -22,6 +22,7 @@
             "fqe": [],
             "openfermion": [],
             "qiskit-aer": [],
+            "dppy": [],
             "puccinialin": []
         },
         "env_nobuild": {

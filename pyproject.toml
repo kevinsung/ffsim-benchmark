@@ -7,7 +7,12 @@ name = "ffsim-benchmark"
 version = "0.0.0"
 description = "Benchmarks for ffsim"
 
-dependencies = ["ffsim", "fqe", "qiskit-aer"]
+dependencies = [
+    "dppy>=0.3.3",
+    "ffsim",
+    "fqe",
+    "qiskit-aer",
+]
 
 [project.optional-dependencies]
 dev = ["asv", "mypy", "pytest", "ruff"]

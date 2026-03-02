@@ -8,9 +8,32 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+from collections.abc import Sequence
+
 import numpy as np
+from dppy.finite_dpps import FiniteDPP
 
 import ffsim
+
+
+def sample_slater_dppy(
+    norb: int,
+    occupied_orbitals: Sequence[int],
+    orbital_rotation: np.ndarray,
+    mode: str,
+    shots: int = 1,
+):
+    rdm = ffsim.slater_determinant_rdms(
+        norb, occupied_orbitals, orbital_rotation=orbital_rotation
+    )
+    dpp = FiniteDPP(
+        kernel_type="likelihood",
+        projection=False,
+        L=rdm,
+    )
+    for _ in range(shots):
+        dpp.sample_exact_k_dpp(len(occupied_orbitals), mode=mode)
+    return [sum(1 << orb for orb in sample) for sample in dpp.list_of_samples]
 
 
 class SampleSlaterBenchmark:
@@ -39,7 +62,7 @@ class SampleSlaterBenchmark:
             self.norb, self.nelec, seed=self.rng
         )
 
-    def time_sample_slater_determinant_real_ffsim(self, *_):
+    def time_sample_slater_real_ffsim(self, *_):
         _ = ffsim.sample_slater(
             self.norb,
             self.occupied_orbitals,
@@ -49,7 +72,7 @@ class SampleSlaterBenchmark:
             seed=self.rng,
         )
 
-    def time_sample_slater_determinant_complex_ffsim(self, *_):
+    def time_sample_slater_complex_ffsim(self, *_):
         _ = ffsim.sample_slater(
             self.norb,
             self.occupied_orbitals,
@@ -57,4 +80,49 @@ class SampleSlaterBenchmark:
             shots=self.shots,
             bitstring_type=ffsim.BitstringType.INT,
             seed=self.rng,
+        )
+
+    def time_sample_slater_real_gs_dppy(self, *_):
+        _ = sample_slater_dppy(
+            self.norb,
+            self.occupied_orbitals,
+            self.orbital_rotation_real,
+            mode="GS",
+            shots=self.shots,
+        )
+
+    def time_sample_slater_real_gs_bis_dppy(self, *_):
+        _ = sample_slater_dppy(
+            self.norb,
+            self.occupied_orbitals,
+            self.orbital_rotation_real,
+            mode="GS_bis",
+            shots=self.shots,
+        )
+
+    def time_sample_slater_real_kuta12_dppy(self, *_):
+        _ = sample_slater_dppy(
+            self.norb,
+            self.occupied_orbitals,
+            self.orbital_rotation_real,
+            mode="KuTa12",
+            shots=self.shots,
+        )
+
+    def time_sample_slater_real_vfx_dppy(self, *_):
+        _ = sample_slater_dppy(
+            self.norb,
+            self.occupied_orbitals,
+            self.orbital_rotation_real,
+            mode="vfx",
+            shots=self.shots,
+        )
+
+    def time_sample_slater_real_alpha_dppy(self, *_):
+        _ = sample_slater_dppy(
+            self.norb,
+            self.occupied_orbitals,
+            self.orbital_rotation_real,
+            mode="alpha",
+            shots=self.shots,
         )

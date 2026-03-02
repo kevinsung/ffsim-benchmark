@@ -591,6 +591,20 @@ wheels = [
 ]
 
 [[package]]
+name = "dppy"
+version = "0.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ab/74/a2bbcb284764a9ad739bda4a082770c304d977cb0b672790b9b149e8d475/dppy-0.3.3.tar.gz", hash = "sha256:cfd381b29c535e62dfb347636a54cb0a5e18fb5ca4f55e206dc9c5b14e3ba980", size = 93261, upload-time = "2024-08-14T20:46:06.447Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0e/dc/b04624d24be1f5512a2f48b9028b9fdc474907f84b5e2e3e4bf204b74757/dppy-0.3.3-py3-none-any.whl", hash = "sha256:a770d6b906a9939a156e8e6f86d9d3b880edc1df8639106bff60b18fc1b483ab", size = 83822, upload-time = "2024-08-14T20:46:04.74Z" },
+]
+
+[[package]]
 name = "duet"
 version = "0.2.9"
 source = { registry = "https://pypi.org/simple" }
@@ -664,6 +678,7 @@ name = "ffsim-benchmark"
 version = "0.0.0"
 source = { editable = "." }
 dependencies = [
+    { name = "dppy" },
     { name = "ffsim" },
     { name = "fqe" },
     { name = "qiskit-aer" },
@@ -680,6 +695,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "asv", marker = "extra == 'dev'" },
+    { name = "dppy", specifier = ">=0.3.3" },
     { name = "ffsim", editable = "../ffsim" },
     { name = "fqe" },
     { name = "mypy", marker = "extra == 'dev'" },
