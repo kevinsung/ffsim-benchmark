@@ -678,6 +678,7 @@ name = "ffsim-benchmark"
 version = "0.0.0"
 source = { editable = "." }
 dependencies = [
+    { name = "asv" },
     { name = "dppy" },
     { name = "ffsim" },
     { name = "fqe" },
@@ -694,6 +695,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "asv", specifier = ">=0.6.5" },
     { name = "asv", marker = "extra == 'dev'" },
     { name = "dppy", specifier = ">=0.3.3" },
     { name = "ffsim", editable = "../ffsim" },
