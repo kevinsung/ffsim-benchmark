@@ -22,7 +22,7 @@ def find_result_data(results_dir: str, num_threads: int) -> dict:
         raise FileNotFoundError(
             f"No result file found with OMP_NUM_THREADS={num_threads} in {results_dir}"
         )
-    return max(candidates)[1]
+    return max(candidates, key=lambda x: x[0])[1]
 
 
 (machine,) = (
@@ -241,7 +241,7 @@ fig.legend(
 # Reserve extra bottom margin for the legend
 fig.subplots_adjust(bottom=0.21)
 
-filepath = Path("plots/benchmark.pdf")
+filepath = Path("plots/sim.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
 plt.savefig(filepath, bbox_inches="tight")
 print(f"Saved figure to {filepath}.")
