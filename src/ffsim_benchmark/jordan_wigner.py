@@ -22,11 +22,13 @@ class JordanWignerBenchmark:
         "n_terms",
     ]
     params = [
-        (10, 100),
+        (100, 1000, 10_000),
     ]
 
     def setup(self, n_terms: int):
-        self.op_ffsim = random_fermion_operator(norb=50, n_terms=n_terms, seed=4142)
+        self.op_ffsim = random_fermion_operator(
+            norb=50, n_terms=n_terms, max_term_length=10, seed=4142
+        )
         self.op_openfermion = ffsim_op_to_openfermion_op(self.op_ffsim)
 
     def time_jordan_wigner_ffsim(self, *_):
