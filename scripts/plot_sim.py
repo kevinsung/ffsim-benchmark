@@ -17,7 +17,7 @@ def find_result_data(results_dir: str, num_threads: int) -> dict:
         with open(path) as f:
             data = json.load(f)
         if int(data.get("env_vars", {}).get("OMP_NUM_THREADS", -1)) == num_threads:
-            candidates.append((data["date"], data))
+            candidates.append((os.path.getmtime(path), data))
     if not candidates:
         raise FileNotFoundError(
             f"No result file found with OMP_NUM_THREADS={num_threads} in {results_dir}"
