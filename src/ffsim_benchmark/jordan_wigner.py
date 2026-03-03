@@ -32,5 +32,5 @@ class JordanWignerBenchmark:
     def time_jordan_wigner_ffsim(self, *_):
         _ = ffsim.qiskit.jordan_wigner(self.op_ffsim)
 
-    def time_normal_order_openfermion(self, *_):
+    def time_jordan_wigner_openfermion(self, *_):
         _ = of.jordan_wigner(self.op_openfermion)
