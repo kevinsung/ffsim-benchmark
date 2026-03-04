@@ -168,17 +168,13 @@ def plot_results(
     )
 
 
-fig, axes = plt.subplots(
-    1,
-    2,
-)
+fig, axes = plt.subplots(1, 2)
 # fig.subplots_adjust(wspace=0.25)
 norb_range = [50, 100, 200, 400]
 
 benchmark_names = {
-    "ffsim (real)": "slater.SampleSlaterBenchmark.time_sample_slater_real_ffsim",
-    "dppy (GS)": "slater.SampleSlaterBenchmark.time_sample_slater_real_gs_dppy",
-    "dppy (GS_bis)": "slater.SampleSlaterBenchmark.time_sample_slater_real_gs_bis_dppy",
+    "ffsim (real)": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_ffsim",
+    "dppy (GS)": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_gs_dppy",
 }
 title = "Real"
 plot_results(
