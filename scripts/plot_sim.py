@@ -8,8 +8,30 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+BENCHMARK_NAMES_TROTTER = {
+    "Aer": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_qiskit",
+    "FQE": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe",
+    "ffsim": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_ffsim",
+}
+BENCHMARK_NAMES_QUAD_HAM = {
+    "Aer": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_qiskit",
+    "FQE": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_fqe",
+    "ffsim": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_ffsim",
+}
+BENCHMARK_NAMES_OP_ACTION = {
+    "FQE": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_fqe_restricted",
+    "ffsim": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_ffsim",
+}
+DESIRED_BENCHMARKS = (
+    set(BENCHMARK_NAMES_TROTTER.values())
+    | set(BENCHMARK_NAMES_QUAD_HAM.values())
+    | set(BENCHMARK_NAMES_OP_ACTION.values())
+)
 
-def find_result_data(results_dir: str, num_threads: int) -> dict:
+
+def find_result_data(
+    results_dir: str, num_threads: int, required_benchmarks: set[str] | None = None
+) -> dict:
     candidates = []
     for path in glob.glob(f"{results_dir}/*.json"):
         if path.endswith("machine.json"):
@@ -17,7 +39,10 @@ def find_result_data(results_dir: str, num_threads: int) -> dict:
         with open(path) as f:
             data = json.load(f)
         if int(data.get("env_vars", {}).get("OMP_NUM_THREADS", -1)) == num_threads:
-            candidates.append((os.path.getmtime(path), data))
+            if required_benchmarks is None or required_benchmarks.issubset(
+                data.get("results", {}).keys()
+            ):
+                candidates.append((os.path.getmtime(path), data))
     if not candidates:
         raise FileNotFoundError(
             f"No result file found with OMP_NUM_THREADS={num_threads} in {results_dir}"
@@ -31,8 +56,8 @@ def find_result_data(results_dir: str, num_threads: int) -> dict:
 )
 RESULTS_DIR = f".asv/results/{machine}"
 
-DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1)
-DATA_MULTI_THREADED = find_result_data(RESULTS_DIR, 6)
+DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1, DESIRED_BENCHMARKS)
+DATA_MULTI_THREADED = find_result_data(RESULTS_DIR, 6, DESIRED_BENCHMARKS)
 print(f"Single threaded commit: {DATA_SINGLE_THREADED['commit_hash'][:8]}")
 print(
     f"Single threaded date: {datetime.fromtimestamp(DATA_SINGLE_THREADED['date'] / 1000)}"
@@ -177,42 +202,28 @@ fig, axes = plt.subplots(
 fig.subplots_adjust(wspace=0.25)
 norb_range = [4, 8, 12, 16]
 
-benchmark_names = {
-    "Aer": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_qiskit",
-    "FQE": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe",
-    "ffsim": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_ffsim",
-}
 title = "DF Trotter"
 plot_results(
     axes[0],
-    benchmark_names=benchmark_names,
+    benchmark_names=BENCHMARK_NAMES_TROTTER,
     norb_range=norb_range,
     title=title,
     ylim=(1e-3, 1e3),
 )
 
-benchmark_names = {
-    "Aer": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_qiskit",
-    "FQE": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_fqe",
-    "ffsim": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_ffsim",
-}
 title = "Quad Ham"
 plot_results(
     axes[1],
-    benchmark_names=benchmark_names,
+    benchmark_names=BENCHMARK_NAMES_QUAD_HAM,
     norb_range=norb_range,
     title=title,
     ylim=(1e-4, 2e2),
 )
 
-benchmark_names = {
-    "FQE": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_fqe_restricted",
-    "ffsim": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_ffsim",
-}
 title = "Op action"
 plot_results(
     axes[2],
-    benchmark_names=benchmark_names,
+    benchmark_names=BENCHMARK_NAMES_OP_ACTION,
     norb_range=norb_range,
     title=title,
     ylim=(5e-5, 2e3),

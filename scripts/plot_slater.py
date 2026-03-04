@@ -8,8 +8,16 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+BENCHMARK_NAMES = {
+    "ffsim": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_ffsim",
+    "dppy": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_gs_dppy",
+}
+DESIRED_BENCHMARKS = set(BENCHMARK_NAMES.values())
 
-def find_result_data(results_dir: str, num_threads: int) -> dict:
+
+def find_result_data(
+    results_dir: str, num_threads: int, required_benchmarks: set[str] | None = None
+) -> dict:
     candidates = []
     for path in glob.glob(f"{results_dir}/*.json"):
         if path.endswith("machine.json"):
@@ -17,7 +25,10 @@ def find_result_data(results_dir: str, num_threads: int) -> dict:
         with open(path) as f:
             data = json.load(f)
         if int(data.get("env_vars", {}).get("OMP_NUM_THREADS", -1)) == num_threads:
-            candidates.append((os.path.getmtime(path), data))
+            if required_benchmarks is None or required_benchmarks.issubset(
+                data.get("results", {}).keys()
+            ):
+                candidates.append((os.path.getmtime(path), data))
     if not candidates:
         raise FileNotFoundError(
             f"No result file found with OMP_NUM_THREADS={num_threads} in {results_dir}"
@@ -31,8 +42,8 @@ def find_result_data(results_dir: str, num_threads: int) -> dict:
 )
 RESULTS_DIR = f".asv/results/{machine}"
 
-DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1)
-DATA_MULTI_THREADED = find_result_data(RESULTS_DIR, 6)
+DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1, DESIRED_BENCHMARKS)
+DATA_MULTI_THREADED = find_result_data(RESULTS_DIR, 6, DESIRED_BENCHMARKS)
 print(f"Single threaded commit: {DATA_SINGLE_THREADED['commit_hash'][:8]}")
 print(
     f"Single threaded date: {datetime.fromtimestamp(DATA_SINGLE_THREADED['date'] / 1000)}"
@@ -172,14 +183,10 @@ fig, axes = plt.subplots(1, 2)
 # fig.subplots_adjust(wspace=0.25)
 norb_range = [50, 100, 200, 400]
 
-benchmark_names = {
-    "ffsim (real)": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_ffsim",
-    "dppy (GS)": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_gs_dppy",
-}
 title = "Real"
 plot_results(
     axes,
-    benchmark_names=benchmark_names,
+    benchmark_names=BENCHMARK_NAMES,
     norb_range=norb_range,
     title=title,
 )
