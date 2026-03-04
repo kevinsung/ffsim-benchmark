@@ -181,7 +181,7 @@ fig, axes = plt.subplots(1, 2)
 # fig.subplots_adjust(wspace=0.25)
 norb_range = [50, 100, 200, 400]
 
-title = "Real"
+title = "Sample Slater"
 plot_results(
     axes,
     benchmark_names=BENCHMARK_NAMES,
@@ -200,7 +200,7 @@ fig.legend(
     handles,
     labels,
     loc="lower center",
-    ncol=3,
+    ncol=2,
 )
 
 fig.subplots_adjust(bottom=0.21)
