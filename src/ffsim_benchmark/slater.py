@@ -46,13 +46,14 @@ class SampleSlaterBenchmarkReal:
     params = [
         (50, 100, 200, 400),
         (0.25, 0.5),
+        (1_000, 10_000),
     ]
 
-    def setup(self, norb: int, filling_fraction: float):
+    def setup(self, norb: int, filling_fraction: float, shots: int):
         # set benchmark parameters
         self.norb = norb
         self.nelec = int(norb * filling_fraction)
-        self.shots = 1_000
+        self.shots = shots
 
         # initialize test objects
         self.rng = np.random.default_rng(238951493330509724797921217923308475371)
