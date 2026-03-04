@@ -64,17 +64,13 @@ for k in DATA_MULTI_THREADED["results"]:
 
 colors = {
     "ffsim (real)": "#0f62fe",
-    "ffsim (complex)": "#002d9c",
     "dppy (GS)": "#ff7eb6",
     "dppy (GS_bis)": "#be95ff",
-    "dppy (KuTa12)": "#42be65",
 }
 fmts = {
     "ffsim (real)": "o--",
-    "ffsim (complex)": "D-.",
     "dppy (GS)": "v-.",
     "dppy (GS_bis)": "s:",
-    "dppy (KuTa12)": "^-",
 }
 
 
@@ -138,7 +134,7 @@ def plot_results(
             yerr_a = [t - x for t, x in zip(times, stats_q_25)]
             yerr_b = [x - t for t, x in zip(times, stats_q_75)]
             ax.errorbar(
-                norb_range,
+                range(len(norb_range)),
                 times,
                 yerr=(yerr_a, yerr_b),
                 fmt=fmts[label_single],
@@ -149,7 +145,7 @@ def plot_results(
             yerr_a = [t - x for t, x in zip(times, stats_q_25)]
             yerr_b = [x - t for t, x in zip(times, stats_q_75)]
             ax.errorbar(
-                norb_range,
+                range(len(norb_range)),
                 times,
                 yerr=(yerr_a, yerr_b),
                 fmt=fmts[label_multi],
@@ -159,7 +155,7 @@ def plot_results(
             )
 
         ax.set_yscale("log")
-        ax.set_xticks(norb_range)
+        ax.set_xticks(range(len(norb_range)), labels=norb_range)
         if ylim:
             ax.set_ylim(*ylim)
 
@@ -173,47 +169,32 @@ def plot_results(
 
 
 fig, axes = plt.subplots(
-    2,
+    1,
     2,
 )
-fig.subplots_adjust(wspace=0.25)
+# fig.subplots_adjust(wspace=0.25)
 norb_range = [50, 100, 200, 400]
 
 benchmark_names = {
     "ffsim (real)": "slater.SampleSlaterBenchmark.time_sample_slater_real_ffsim",
     "dppy (GS)": "slater.SampleSlaterBenchmark.time_sample_slater_real_gs_dppy",
     "dppy (GS_bis)": "slater.SampleSlaterBenchmark.time_sample_slater_real_gs_bis_dppy",
-    "dppy (KuTa12)": "slater.SampleSlaterBenchmark.time_sample_slater_real_kuta12_dppy",
 }
 title = "Real"
 plot_results(
-    axes[0],
+    axes,
     benchmark_names=benchmark_names,
     norb_range=norb_range,
     title=title,
 )
 
-benchmark_names = {
-    "ffsim (real)": "slater.SampleSlaterBenchmark.time_sample_slater_real_ffsim",
-    "ffsim (complex)": "slater.SampleSlaterBenchmark.time_sample_slater_complex_ffsim",
-}
-title = "ffsim real vs complex"
-plot_results(
-    axes[1],
-    benchmark_names=benchmark_names,
-    norb_range=norb_range,
-    title=title,
-)
-
-for ax in axes[0]:
-    ax.tick_params(axis="x", labelbottom=False)
-for ax in axes[1]:
+for ax in axes:
     ax.set_xlabel("# orbitals")
 
-axes[0, 0].set_title("filling 1/2")
-axes[0, 1].set_title("filling 1/4")
+axes[0].set_title("filling 1/2")
+axes[1].set_title("filling 1/4")
 
-handles, labels = axes[0, 0].get_legend_handles_labels()
+handles, labels = axes[0].get_legend_handles_labels()
 fig.legend(
     handles,
     labels,
