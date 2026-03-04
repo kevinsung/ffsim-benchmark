@@ -74,14 +74,12 @@ for k in DATA_MULTI_THREADED["results"]:
 
 
 colors = {
-    "ffsim (real)": "#0f62fe",
-    "dppy (GS)": "#ff7eb6",
-    "dppy (GS_bis)": "#be95ff",
+    "ffsim": "#0f62fe",
+    "dppy": "#ff7eb6",
 }
 fmts = {
-    "ffsim (real)": "o--",
-    "dppy (GS)": "v-.",
-    "dppy (GS_bis)": "s:",
+    "ffsim": "o--",
+    "dppy": "v-.",
 }
 
 
