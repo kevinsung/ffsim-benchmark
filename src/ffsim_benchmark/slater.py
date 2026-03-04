@@ -90,12 +90,3 @@ class SampleSlaterBenchmark:
             mode="GS",
             shots=self.shots,
         )
-
-    def time_sample_slater_real_gs_bis_dppy(self, *_):
-        _ = sample_slater_dppy(
-            self.norb,
-            self.occupied_orbitals,
-            self.orbital_rotation_real,
-            mode="GS_bis",
-            shots=self.shots,
-        )
