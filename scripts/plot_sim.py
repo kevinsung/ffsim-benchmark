@@ -98,6 +98,12 @@ fmts = {
     "ffsim": "o--",
 }
 
+capsize = 4
+legend_fontsize = 12
+tick_label_fontsize = 13
+axis_label_fontsize = 14
+title_fontsize = 15
+
 
 def plot_results(
     axes,
@@ -165,6 +171,7 @@ def plot_results(
                 fmt=fmts[label_single],
                 color=colors[label_single],
                 label=label_single,
+                capsize=capsize,
             )
             times, stats_q_25, stats_q_75 = zip(*data_multi)
             yerr_a = [t - x for t, x in zip(times, stats_q_25)]
@@ -177,6 +184,7 @@ def plot_results(
                 color=colors[label_multi],
                 alpha=0.5,
                 label=f"{label_multi}, {MULTI_THREADED_NUM_THREADS} threads",
+                capsize=capsize,
             )
 
         ax.set_yscale("log")
@@ -184,21 +192,26 @@ def plot_results(
         if ylim:
             ax.set_ylim(*ylim)
 
-    axes[0].set_ylabel("Time (s)")
+    axes[0].set_ylabel("Time (s)", fontsize=axis_label_fontsize)
     axes[-1].yaxis.set_label_position("right")
     axes[-1].set_ylabel(
         title,
         rotation=270,
         # labelpad=15,
         va="bottom",
+        fontsize=axis_label_fontsize,
     )
 
 
 fig, axes = plt.subplots(
     3,
     2,
-    # figsize=(8, 7),
+    figsize=(12, 8),
 )
+for row in axes:
+    for ax in row:
+        ax.tick_params(axis="both", labelsize=tick_label_fontsize)
+
 fig.subplots_adjust(wspace=0.25)
 norb_range = [4, 8, 12, 16]
 
@@ -233,10 +246,10 @@ for ax_list in axes[:2]:
     for ax in ax_list:
         ax.tick_params(axis="x", labelbottom=False)
 for ax in axes[2]:
-    ax.set_xlabel("# orbitals")
+    ax.set_xlabel("# orbitals", fontsize=axis_label_fontsize)
 
-axes[0, 0].set_title("filling 1/2")
-axes[0, 1].set_title("filling 1/4")
+axes[0, 0].set_title("filling 1/2", fontsize=title_fontsize)
+axes[0, 1].set_title("filling 1/4", fontsize=title_fontsize)
 
 handles, labels = axes[0, 0].get_legend_handles_labels()
 # Place legend centered below the entire figure
@@ -247,10 +260,11 @@ fig.legend(
     # bbox_to_anchor=(0.5, -0.02),  # slight negative y to sit just below
     ncol=3,  # tweak based on how many entries you have
     # frameon=False,
+    fontsize=legend_fontsize,
 )
 
 # Reserve extra bottom margin for the legend
-fig.subplots_adjust(bottom=0.21)
+fig.subplots_adjust(bottom=0.15)
 
 filepath = Path("plots/sim.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
