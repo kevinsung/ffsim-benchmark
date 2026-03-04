@@ -257,16 +257,14 @@ fig.legend(
     handles,
     labels,
     loc="lower center",
-    # bbox_to_anchor=(0.5, -0.02),  # slight negative y to sit just below
     ncol=3,  # tweak based on how many entries you have
-    # frameon=False,
     fontsize=legend_fontsize,
 )
 
 # Reserve extra bottom margin for the legend
-fig.subplots_adjust(bottom=0.15)
-
+fig.tight_layout()
+fig.subplots_adjust(bottom=0.16)
 filepath = Path("plots/sim.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
-plt.savefig(filepath, bbox_inches="tight")
+plt.savefig(filepath)
 print(f"Saved figure to {filepath}.")
