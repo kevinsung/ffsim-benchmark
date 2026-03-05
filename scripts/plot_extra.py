@@ -74,6 +74,12 @@ markers = {
     "openfermion": "v",
 }
 
+capsize = 4
+legend_fontsize = 12
+tick_label_fontsize = 13
+axis_label_fontsize = 14
+title_fontsize = 15
+
 
 def _load_benchmark_results(benchmark_names: dict[str, str]) -> dict[str, dict]:
     results = {}
@@ -121,6 +127,7 @@ def plot_slater(
             linestyle="--",
             color=colors[label],
             label=label,
+            capsize=capsize,
         )
 
     ax.set_yscale("log")
@@ -149,6 +156,7 @@ def plot_normal_order(
             linestyle="--",
             color=colors[label],
             label=label,
+            capsize=capsize,
         )
 
     ax.set_yscale("log")
@@ -160,20 +168,23 @@ def plot_normal_order(
 norb_range = [100, 200, 400, 800]
 n_terms_range = [100, 1_000, 10_000, 100_000]
 
-fig, (ax_slater, ax_normal) = plt.subplots(1, 2, figsize=(12, 4))
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+ax_slater, ax_normal = axes
+for ax in axes:
+    ax.tick_params(axis="both", labelsize=tick_label_fontsize)
 
 plot_slater(ax_slater, norb_range=norb_range, shots=1_000, filling_fraction=0.25)
 plot_normal_order(ax_normal, n_terms_range=n_terms_range)
 
-ax_slater.set_title("Sample Slater")
-ax_slater.set_xlabel("# orbitals")
-ax_slater.set_ylabel("Time (s)")
-ax_slater.legend()
+ax_slater.set_title("Sample Slater", fontsize=title_fontsize)
+ax_slater.set_xlabel("# orbitals", fontsize=axis_label_fontsize)
+ax_slater.set_ylabel("Time (s)", fontsize=axis_label_fontsize)
+ax_slater.legend(fontsize=legend_fontsize)
 
-ax_normal.set_title("Normal order")
-ax_normal.set_xlabel("# terms")
-ax_normal.set_ylabel("Time (s)")
-ax_normal.legend()
+ax_normal.set_title("Normal order", fontsize=title_fontsize)
+ax_normal.set_xlabel("# terms", fontsize=axis_label_fontsize)
+ax_normal.set_ylabel("Time (s)", fontsize=axis_label_fontsize)
+ax_normal.legend(fontsize=legend_fontsize)
 
 filepath = Path("plots/extra.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
