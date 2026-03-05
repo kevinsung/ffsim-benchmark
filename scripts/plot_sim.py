@@ -215,22 +215,22 @@ for row in axes:
 fig.subplots_adjust(wspace=0.25)
 norb_range = [4, 8, 12, 16]
 
-title = "DF Trotter"
-plot_results(
-    axes[0],
-    benchmark_names=BENCHMARK_NAMES_TROTTER,
-    norb_range=norb_range,
-    title=title,
-    ylim=(1e-3, 1e3),
-)
-
 title = "Quad Ham"
 plot_results(
-    axes[1],
+    axes[0],
     benchmark_names=BENCHMARK_NAMES_QUAD_HAM,
     norb_range=norb_range,
     title=title,
     ylim=(1e-4, 2e2),
+)
+
+title = "DF Trotter"
+plot_results(
+    axes[1],
+    benchmark_names=BENCHMARK_NAMES_TROTTER,
+    norb_range=norb_range,
+    title=title,
+    ylim=(1e-3, 1e3),
 )
 
 title = "Op action"
