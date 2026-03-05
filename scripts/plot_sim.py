@@ -215,7 +215,7 @@ for row in axes:
 fig.subplots_adjust(wspace=0.25)
 norb_range = [4, 8, 12, 16]
 
-title = "Quad Ham"
+title = "Quad Ham evo"
 plot_results(
     axes[0],
     benchmark_names=BENCHMARK_NAMES_QUAD_HAM,
@@ -233,7 +233,7 @@ plot_results(
     ylim=(1e-3, 1e3),
 )
 
-title = "Op action"
+title = "Mol Ham action"
 plot_results(
     axes[2],
     benchmark_names=BENCHMARK_NAMES_OP_ACTION,
