@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 SLATER_BENCHMARK_NAMES = {
-    "ffsim": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_ffsim",
     "dppy": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_gs_dppy",
+    "ffsim": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_ffsim",
 }
 NORMAL_ORDER_BENCHMARK_NAMES = {
-    "ffsim": "fermion_operator.FermionOperatorBenchmark.time_normal_order_ffsim",
     "openfermion": "fermion_operator.FermionOperatorBenchmark.time_normal_order_openfermion",
+    "ffsim": "fermion_operator.FermionOperatorBenchmark.time_normal_order_ffsim",
 }
 DESIRED_BENCHMARKS = set(SLATER_BENCHMARK_NAMES.values()) | set(
     NORMAL_ORDER_BENCHMARK_NAMES.values()
@@ -73,8 +73,6 @@ markers = {
     "dppy": "s",
     "openfermion": "v",
 }
-linestyles = {0.5: "-", 0.25: "--"}
-filling_labels = {0.5: "1/2", 0.25: "1/4"}
 
 
 def _load_benchmark_results(benchmark_names: dict[str, str]) -> dict[str, dict]:
@@ -103,28 +101,27 @@ def plot_slater(
     ax,
     norb_range: list[int],
     shots: int,
+    filling_fraction: float,
     ylim: tuple[float, float] | None = None,
 ) -> None:
     benchmark_results = _load_benchmark_results(SLATER_BENCHMARK_NAMES)
-
-    for filling_fraction in [0.5, 0.25]:
-        for label, times_by_key in benchmark_results.items():
-            data = [
-                times_by_key[(str(norb), str(filling_fraction), str(shots))]
-                for norb in norb_range
-            ]
-            times, stats_q_25, stats_q_75 = zip(*data)
-            yerr_a = [t - x for t, x in zip(times, stats_q_25)]
-            yerr_b = [x - t for t, x in zip(times, stats_q_75)]
-            ax.errorbar(
-                range(len(norb_range)),
-                times,
-                yerr=(yerr_a, yerr_b),
-                marker=markers[label],
-                linestyle=linestyles[filling_fraction],
-                color=colors[label],
-                label=f"{label}, filling {filling_labels[filling_fraction]}",
-            )
+    for label, times_by_key in benchmark_results.items():
+        data = [
+            times_by_key[(str(norb), str(filling_fraction), str(shots))]
+            for norb in norb_range
+        ]
+        times, stats_q_25, stats_q_75 = zip(*data)
+        yerr_a = [t - x for t, x in zip(times, stats_q_25)]
+        yerr_b = [x - t for t, x in zip(times, stats_q_75)]
+        ax.errorbar(
+            range(len(norb_range)),
+            times,
+            yerr=(yerr_a, yerr_b),
+            marker=markers[label],
+            linestyle="--",
+            color=colors[label],
+            label=label,
+        )
 
     ax.set_yscale("log")
     ax.set_xticks(range(len(norb_range)), labels=norb_range)
@@ -149,7 +146,7 @@ def plot_normal_order(
             times,
             yerr=(yerr_a, yerr_b),
             marker=markers[label],
-            linestyle="-",
+            linestyle="--",
             color=colors[label],
             label=label,
         )
@@ -165,7 +162,7 @@ n_terms_range = [100, 1_000, 10_000, 100_000]
 
 fig, (ax_slater, ax_normal) = plt.subplots(1, 2, figsize=(12, 4))
 
-plot_slater(ax_slater, norb_range=norb_range, shots=1_000)
+plot_slater(ax_slater, norb_range=norb_range, shots=1_000, filling_fraction=0.25)
 plot_normal_order(ax_normal, n_terms_range=n_terms_range)
 
 ax_slater.set_title("Sample Slater")
@@ -173,7 +170,7 @@ ax_slater.set_xlabel("# orbitals")
 ax_slater.set_ylabel("Time (s)")
 ax_slater.legend()
 
-ax_normal.set_title("Normal Order")
+ax_normal.set_title("Normal order")
 ax_normal.set_xlabel("# terms")
 ax_normal.set_ylabel("Time (s)")
 ax_normal.legend()
