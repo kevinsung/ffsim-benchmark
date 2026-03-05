@@ -160,7 +160,7 @@ fig.legend(
 
 fig.subplots_adjust(bottom=0.21)
 
-filepath = Path("plots/slater.pdf")
+filepath = Path("plots/extra.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
 plt.savefig(filepath, bbox_inches="tight")
 print(f"Saved figure to {filepath}.")
