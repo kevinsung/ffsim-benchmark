@@ -42,44 +42,28 @@ def find_result_data(
 )
 RESULTS_DIR = f".asv/results/{machine}"
 
-DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1, DESIRED_BENCHMARKS)
-DATA_MULTI_THREADED = find_result_data(RESULTS_DIR, 6, DESIRED_BENCHMARKS)
-print(f"Single threaded commit: {DATA_SINGLE_THREADED['commit_hash'][:8]}")
-print(
-    f"Single threaded date: {datetime.fromtimestamp(DATA_SINGLE_THREADED['date'] / 1000)}"
-)
-print(f"Multi threaded commit: {DATA_MULTI_THREADED['commit_hash'][:8]}")
-print(
-    f"Multi threaded date: {datetime.fromtimestamp(DATA_MULTI_THREADED['date'] / 1000)}"
-)
+DATA = find_result_data(RESULTS_DIR, 1, DESIRED_BENCHMARKS)
+print(f"Commit: {DATA['commit_hash'][:8]}")
+print(f"Date: {datetime.fromtimestamp(DATA['date'] / 1000)}")
 
 assert (
-    int(DATA_SINGLE_THREADED["env_vars"]["OMP_NUM_THREADS"])
-    == int(DATA_SINGLE_THREADED["env_vars"]["RAYON_NUM_THREADS"])
+    int(DATA["env_vars"]["OMP_NUM_THREADS"])
+    == int(DATA["env_vars"]["RAYON_NUM_THREADS"])
     == 1
 )
-assert (
-    int(DATA_MULTI_THREADED["env_vars"]["OMP_NUM_THREADS"])
-    == int(DATA_MULTI_THREADED["env_vars"]["RAYON_NUM_THREADS"])
-    > 1
-)
-MULTI_THREADED_NUM_THREADS = int(DATA_MULTI_THREADED["env_vars"]["OMP_NUM_THREADS"])
 
-print("Single-threaded benchmarks:")
-for k in DATA_SINGLE_THREADED["results"]:
-    print(f"\t{k}")
-print("Multi-threaded benchmarks:")
-for k in DATA_MULTI_THREADED["results"]:
+print("Benchmarks:")
+for k in DATA["results"]:
     print(f"\t{k}")
 
 
 colors = {
+    "dppy": "#be95ff",
     "ffsim": "#0f62fe",
-    "dppy": "#ff7eb6",
 }
 fmts = {
+    "dppy": "s:",
     "ffsim": "o--",
-    "dppy": "v-.",
 }
 
 
@@ -87,35 +71,19 @@ def plot_results(
     axes,
     benchmark_names: dict[str, str],
     norb_range: list[int],
+    shots: int,
     title: str,
     ylim: tuple[float, float] | None = None,
 ) -> None:
-    benchmark_results_single_threaded = {}
-    benchmark_results_multi_threaded = {}
+    benchmark_results = {}
     for label, benchmark_name in benchmark_names.items():
         these_results = dict(
             zip(
-                DATA_SINGLE_THREADED["result_columns"],
-                DATA_SINGLE_THREADED["results"][benchmark_name],
+                DATA["result_columns"],
+                DATA["results"][benchmark_name],
             )
         )
-        benchmark_results_single_threaded[label] = dict(
-            zip(
-                itertools.product(*these_results["params"]),
-                zip(
-                    [np.nan if x is None else x for x in these_results["result"]],
-                    [np.nan if x is None else x for x in these_results["stats_q_25"]],
-                    [np.nan if x is None else x for x in these_results["stats_q_75"]],
-                ),
-            )
-        )
-        these_results = dict(
-            zip(
-                DATA_MULTI_THREADED["result_columns"],
-                DATA_MULTI_THREADED["results"][benchmark_name],
-            )
-        )
-        benchmark_results_multi_threaded[label] = dict(
+        benchmark_results[label] = dict(
             zip(
                 itertools.product(*these_results["params"]),
                 zip(
@@ -127,40 +95,25 @@ def plot_results(
         )
 
     for filling_fraction, ax in zip([0.5, 0.25], axes):
-        times_single_threaded = {
-            label: [times[(str(norb), str(filling_fraction))] for norb in norb_range]
-            for label, times in benchmark_results_single_threaded.items()
-        }
-        times_multi_threaded = {
-            label: [times[(str(norb), str(filling_fraction))] for norb in norb_range]
-            for label, times in benchmark_results_multi_threaded.items()
+        times_dict = {
+            label: [
+                times[(str(norb), str(filling_fraction), str(shots))]
+                for norb in norb_range
+            ]
+            for label, times in benchmark_results.items()
         }
 
-        for (label_single, data_single), (label_multi, data_multi) in zip(
-            times_single_threaded.items(), times_multi_threaded.items()
-        ):
-            times, stats_q_25, stats_q_75 = zip(*data_single)
+        for label, data in times_dict.items():
+            times, stats_q_25, stats_q_75 = zip(*data)
             yerr_a = [t - x for t, x in zip(times, stats_q_25)]
             yerr_b = [x - t for t, x in zip(times, stats_q_75)]
             ax.errorbar(
                 range(len(norb_range)),
                 times,
                 yerr=(yerr_a, yerr_b),
-                fmt=fmts[label_single],
-                color=colors[label_single],
-                label=label_single,
-            )
-            times, stats_q_25, stats_q_75 = zip(*data_multi)
-            yerr_a = [t - x for t, x in zip(times, stats_q_25)]
-            yerr_b = [x - t for t, x in zip(times, stats_q_75)]
-            ax.errorbar(
-                range(len(norb_range)),
-                times,
-                yerr=(yerr_a, yerr_b),
-                fmt=fmts[label_multi],
-                color=colors[label_multi],
-                alpha=0.5,
-                label=f"{label_multi}, {MULTI_THREADED_NUM_THREADS} threads",
+                fmt=fmts[label],
+                color=colors[label],
+                label=label,
             )
 
         ax.set_yscale("log")
@@ -180,12 +133,14 @@ def plot_results(
 fig, axes = plt.subplots(1, 2)
 # fig.subplots_adjust(wspace=0.25)
 norb_range = [50, 100, 200, 400]
+shots = 1_000
 
 title = "Sample Slater"
 plot_results(
     axes,
     benchmark_names=BENCHMARK_NAMES,
     norb_range=norb_range,
+    shots=shots,
     title=title,
 )
 

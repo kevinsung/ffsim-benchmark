@@ -42,11 +42,12 @@ class SampleSlaterBenchmarkReal:
     param_names = [
         "norb",
         "filling_fraction",
+        "shots",
     ]
     params = [
-        (50, 100, 200, 400),
+        (100, 200, 400, 800),
         (0.25, 0.5),
-        (1_000, 10_000),
+        (1_000,),
     ]
 
     def setup(self, norb: int, filling_fraction: float, shots: int):
