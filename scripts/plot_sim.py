@@ -216,7 +216,7 @@ def plot_results(
 fig, axes = plt.subplots(
     3,
     2,
-    figsize=(12, 8),
+    figsize=(12, 10),
 )
 for row in axes:
     for ax in row:
@@ -257,8 +257,8 @@ for ax_list in axes[:2]:
 for ax in axes[2]:
     ax.set_xlabel("# orbitals", fontsize=axis_label_fontsize)
 
-axes[0, 0].set_title("filling 1/2", fontsize=title_fontsize)
-axes[0, 1].set_title("filling 1/4", fontsize=title_fontsize)
+axes[0, 0].set_title("1/2 filling", fontsize=title_fontsize)
+axes[0, 1].set_title("1/4 filling", fontsize=title_fontsize)
 
 handles, labels = axes[0, 0].get_legend_handles_labels()
 # Place legend centered below the entire figure
@@ -272,7 +272,7 @@ fig.legend(
 
 # Reserve extra bottom margin for the legend
 fig.tight_layout()
-fig.subplots_adjust(bottom=0.16)
+fig.subplots_adjust(bottom=0.13)
 filepath = Path("plots/sim.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
 plt.savefig(filepath)
