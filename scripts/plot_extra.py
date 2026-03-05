@@ -197,7 +197,7 @@ ax_normal.set_ylabel("Time (s)", fontsize=axis_label_fontsize)
 ax_normal.legend(fontsize=legend_fontsize)
 
 fig.tight_layout()
-fig.subplots_adjust(wspace=0.25)
+fig.subplots_adjust(wspace=0.22)
 filepath = Path("plots/extra.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
 plt.savefig(filepath)
