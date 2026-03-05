@@ -65,8 +65,8 @@ for k in DATA["results"]:
 
 colors = {
     "ffsim": "#0f62fe",
-    "dppy": "#be95ff",
-    "openfermion": "#ff7eb6",
+    "dppy": "#42be65",
+    "openfermion": "#3ddbd9",
 }
 markers = {
     "ffsim": "o",
