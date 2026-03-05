@@ -222,7 +222,6 @@ for row in axes:
     for ax in row:
         ax.tick_params(axis="both", labelsize=tick_label_fontsize)
 
-fig.subplots_adjust(wspace=0.25)
 norb_range = [4, 8, 12, 16]
 
 title = "Quad Ham evo"
