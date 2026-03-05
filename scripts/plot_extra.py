@@ -8,11 +8,17 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-BENCHMARK_NAMES = {
+SLATER_BENCHMARK_NAMES = {
     "ffsim": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_ffsim",
     "dppy": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_gs_dppy",
 }
-DESIRED_BENCHMARKS = set(BENCHMARK_NAMES.values())
+NORMAL_ORDER_BENCHMARK_NAMES = {
+    "ffsim": "fermion_operator.FermionOperatorBenchmark.time_normal_order_ffsim",
+    "openfermion": "fermion_operator.FermionOperatorBenchmark.time_normal_order_openfermion",
+}
+DESIRED_BENCHMARKS = set(SLATER_BENCHMARK_NAMES.values()) | set(
+    NORMAL_ORDER_BENCHMARK_NAMES.values()
+)
 
 
 def find_result_data(
@@ -58,24 +64,21 @@ for k in DATA["results"]:
 
 
 colors = {
-    "dppy": "#be95ff",
     "ffsim": "#0f62fe",
+    "dppy": "#be95ff",
+    "openfermion": "#ff7eb6",
 }
-fmts = {
-    "dppy": "s:",
-    "ffsim": "o--",
+markers = {
+    "ffsim": "o",
+    "dppy": "s",
+    "openfermion": "v",
 }
+linestyles = {0.5: "-", 0.25: "--"}
+filling_labels = {0.5: "1/2", 0.25: "1/4"}
 
 
-def plot_results(
-    axes,
-    benchmark_names: dict[str, str],
-    norb_range: list[int],
-    shots: int,
-    title: str,
-    ylim: tuple[float, float] | None = None,
-) -> None:
-    benchmark_results = {}
+def _load_benchmark_results(benchmark_names: dict[str, str]) -> dict[str, dict]:
+    results = {}
     for label, benchmark_name in benchmark_names.items():
         these_results = dict(
             zip(
@@ -83,7 +86,7 @@ def plot_results(
                 DATA["results"][benchmark_name],
             )
         )
-        benchmark_results[label] = dict(
+        results[label] = dict(
             zip(
                 itertools.product(*these_results["params"]),
                 zip(
@@ -93,17 +96,23 @@ def plot_results(
                 ),
             )
         )
+    return results
 
-    for filling_fraction, ax in zip([0.5, 0.25], axes):
-        times_dict = {
-            label: [
-                times[(str(norb), str(filling_fraction), str(shots))]
+
+def plot_slater(
+    ax,
+    norb_range: list[int],
+    shots: int,
+    ylim: tuple[float, float] | None = None,
+) -> None:
+    benchmark_results = _load_benchmark_results(SLATER_BENCHMARK_NAMES)
+
+    for filling_fraction in [0.5, 0.25]:
+        for label, times_by_key in benchmark_results.items():
+            data = [
+                times_by_key[(str(norb), str(filling_fraction), str(shots))]
                 for norb in norb_range
             ]
-            for label, times in benchmark_results.items()
-        }
-
-        for label, data in times_dict.items():
             times, stats_q_25, stats_q_75 = zip(*data)
             yerr_a = [t - x for t, x in zip(times, stats_q_25)]
             yerr_b = [x - t for t, x in zip(times, stats_q_75)]
@@ -111,54 +120,63 @@ def plot_results(
                 range(len(norb_range)),
                 times,
                 yerr=(yerr_a, yerr_b),
-                fmt=fmts[label],
+                marker=markers[label],
+                linestyle=linestyles[filling_fraction],
                 color=colors[label],
-                label=label,
+                label=f"{label}, filling {filling_labels[filling_fraction]}",
             )
 
-        ax.set_yscale("log")
-        ax.set_xticks(range(len(norb_range)), labels=norb_range)
-        if ylim:
-            ax.set_ylim(*ylim)
-
-    axes[0].set_ylabel("Time (s)")
-    axes[-1].yaxis.set_label_position("right")
-    axes[-1].set_ylabel(
-        title,
-        rotation=270,
-        va="bottom",
-    )
+    ax.set_yscale("log")
+    ax.set_xticks(range(len(norb_range)), labels=norb_range)
+    if ylim:
+        ax.set_ylim(*ylim)
 
 
-fig, axes = plt.subplots(1, 2)
-# fig.subplots_adjust(wspace=0.25)
-norb_range = [50, 100, 200, 400]
-shots = 1_000
+def plot_normal_order(
+    ax,
+    n_terms_range: list[int],
+    ylim: tuple[float, float] | None = None,
+) -> None:
+    benchmark_results = _load_benchmark_results(NORMAL_ORDER_BENCHMARK_NAMES)
 
-title = "Sample Slater"
-plot_results(
-    axes,
-    benchmark_names=BENCHMARK_NAMES,
-    norb_range=norb_range,
-    shots=shots,
-    title=title,
-)
+    for label, times_by_key in benchmark_results.items():
+        data = [times_by_key[(str(n_terms),)] for n_terms in n_terms_range]
+        times, stats_q_25, stats_q_75 = zip(*data)
+        yerr_a = [t - x for t, x in zip(times, stats_q_25)]
+        yerr_b = [x - t for t, x in zip(times, stats_q_75)]
+        ax.errorbar(
+            range(len(n_terms_range)),
+            times,
+            yerr=(yerr_a, yerr_b),
+            marker=markers[label],
+            linestyle="-",
+            color=colors[label],
+            label=label,
+        )
 
-for ax in axes:
-    ax.set_xlabel("# orbitals")
+    ax.set_yscale("log")
+    ax.set_xticks(range(len(n_terms_range)), labels=n_terms_range)
+    if ylim:
+        ax.set_ylim(*ylim)
 
-axes[0].set_title("filling 1/2")
-axes[1].set_title("filling 1/4")
 
-handles, labels = axes[0].get_legend_handles_labels()
-fig.legend(
-    handles,
-    labels,
-    loc="lower center",
-    ncol=2,
-)
+norb_range = [100, 200, 400, 800]
+n_terms_range = [100, 1_000, 10_000, 100_000]
 
-fig.subplots_adjust(bottom=0.21)
+fig, (ax_slater, ax_normal) = plt.subplots(1, 2, figsize=(12, 4))
+
+plot_slater(ax_slater, norb_range=norb_range, shots=1_000)
+plot_normal_order(ax_normal, n_terms_range=n_terms_range)
+
+ax_slater.set_title("Sample Slater")
+ax_slater.set_xlabel("# orbitals")
+ax_slater.set_ylabel("Time (s)")
+ax_slater.legend()
+
+ax_normal.set_title("Normal Order")
+ax_normal.set_xlabel("# terms")
+ax_normal.set_ylabel("Time (s)")
+ax_normal.legend()
 
 filepath = Path("plots/extra.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
