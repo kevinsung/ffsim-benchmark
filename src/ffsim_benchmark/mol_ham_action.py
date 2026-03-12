@@ -8,6 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+import dataclasses
 from importlib.resources import as_file, files
 
 import fqe
@@ -47,6 +48,8 @@ class MolecularHamiltonianActionRealBenchmark:
         mol_ham = ffsim.random.random_molecular_hamiltonian(
             self.norb, seed=rng, dtype=float
         )
+        mol_ham = dataclasses.replace(mol_ham, constant=0.0)
+
         self.linop_ffsim = ffsim.linear_operator(
             mol_ham, norb=self.norb, nelec=self.nelec
         )
