@@ -32,16 +32,13 @@ class GatesBenchmark:
         self.nelec = (nocc, nocc)
 
         # initialize test objects
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(298028923442658276622338974413865726889)
         self.vec = ffsim.random.random_state_vector(
             ffsim.dim(self.norb, self.nelec), seed=rng
         )
         self.one_body_tensor = ffsim.random.random_hermitian(self.norb, seed=rng)
         self.orbital_energies, self.orbital_rotation = np.linalg.eigh(
             self.one_body_tensor
-        )
-        self.diag_coulomb_mat = ffsim.random.random_real_symmetric_matrix(
-            self.norb, seed=rng
         )
 
         # initialize ffsim cache
@@ -51,16 +48,6 @@ class GatesBenchmark:
         ffsim.apply_num_op_sum_evolution(
             self.vec,
             self.orbital_energies,
-            time=1.0,
-            norb=self.norb,
-            nelec=self.nelec,
-            copy=False,
-        )
-
-    def time_apply_diag_coulomb_evolution_ffsim(self, *_):
-        ffsim.apply_diag_coulomb_evolution(
-            self.vec,
-            self.diag_coulomb_mat,
             time=1.0,
             norb=self.norb,
             nelec=self.nelec,
