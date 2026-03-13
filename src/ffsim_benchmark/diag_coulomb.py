@@ -30,7 +30,7 @@ class DiagCoulombEvoBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8, 12),
+        (4, 8, 12, 16),
         (0.25, 0.5),
     ]
 
@@ -93,7 +93,6 @@ class DiagCoulombEvoBenchmark:
             copy=False,
         )
 
-    @skip_for_params([(16, 0.5)])
     def time_diag_coulomb_evolution_fqe(self, *_):
         _ = evolve_fqe_diagonal_coulomb(self.vec_fqe, self.diag_coulomb_mat, self.time)
 
