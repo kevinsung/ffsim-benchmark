@@ -186,12 +186,12 @@ for ax in axes:
 plot_slater(ax_slater, norb_range=norb_range, shots=1_000, filling_fraction=0.25)
 plot_normal_order(ax_normal, n_terms_range=n_terms_range)
 
-ax_slater.set_title("Sample Slater", fontsize=title_fontsize)
+ax_slater.set_title("Sample Slater", fontsize=title_fontsize, fontweight="bold")
 ax_slater.set_xlabel("# orbitals", fontsize=axis_label_fontsize)
 ax_slater.set_ylabel("Time (s)", fontsize=axis_label_fontsize)
 ax_slater.legend(fontsize=legend_fontsize)
 
-ax_normal.set_title("Normal order", fontsize=title_fontsize)
+ax_normal.set_title("Normal order", fontsize=title_fontsize, fontweight="bold")
 ax_normal.set_xlabel("# terms", fontsize=axis_label_fontsize)
 ax_normal.set_ylabel("Time (s)", fontsize=axis_label_fontsize)
 ax_normal.legend(fontsize=legend_fontsize)
