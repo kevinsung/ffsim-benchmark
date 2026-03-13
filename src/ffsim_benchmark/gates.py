@@ -21,7 +21,7 @@ class GatesBenchmark:
         "filling_fraction",
     ]
     params = [
-        (4, 8, 12),
+        (4, 8, 12, 16),
         (0.25, 0.5),
     ]
 
