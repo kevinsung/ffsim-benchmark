@@ -32,10 +32,16 @@ BENCHMARK_NAMES_OP_ACTION = {
     "FQE": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_fqe_restricted",
     "ffsim": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_ffsim",
 }
+BENCHMARK_NAMES_DIAG_COULOMB = {
+    "Aer": "diag_coulomb.DiagCoulombEvoBenchmark.time_diag_coulomb_evolution_qiskit",
+    "FQE": "diag_coulomb.DiagCoulombEvoBenchmark.time_diag_coulomb_evolution_fqe",
+    "ffsim": "diag_coulomb.DiagCoulombEvoBenchmark.time_diag_coulomb_evolution_ffsim",
+}
 DESIRED_BENCHMARKS = (
     set(BENCHMARK_NAMES_TROTTER.values())
     | set(BENCHMARK_NAMES_QUAD_HAM.values())
     | set(BENCHMARK_NAMES_OP_ACTION.values())
+    | set(BENCHMARK_NAMES_DIAG_COULOMB.values())
 )
 
 
@@ -119,7 +125,6 @@ def plot_results(
     axes,
     benchmark_names: dict[str, str],
     norb_range: list[int],
-    title: str,
     ylim: tuple[float, float] | None = None,
 ) -> None:
     benchmark_results_single_threaded = {}
@@ -205,79 +210,77 @@ def plot_results(
         ax.set_xticks(norb_range)
         if ylim:
             ax.set_ylim(*ylim)
+        ax.set_xlabel("# orbitals", fontsize=axis_label_fontsize)
 
     axes[0].set_ylabel("Time (s)", fontsize=axis_label_fontsize)
-    axes[-1].yaxis.set_label_position("right")
-    axes[-1].set_ylabel(
-        title,
-        rotation=270,
-        # labelpad=15,
-        va="bottom",
-        fontsize=axis_label_fontsize,
-    )
 
 
-fig, axes = plt.subplots(
-    3,
-    2,
-    figsize=(12, 10),
-)
-for row in axes:
-    for ax in row:
+fig = plt.figure(figsize=(14, 10))
+outer_gs = fig.add_gridspec(2, 2, hspace=0.5, wspace=0.25)
+
+group_positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
+axes_groups = []
+for row, col in group_positions:
+    inner_gs = outer_gs[row, col].subgridspec(1, 2, wspace=0.05)
+    ax_left = fig.add_subplot(inner_gs[0, 0])
+    ax_right = fig.add_subplot(inner_gs[0, 1], sharey=ax_left)
+    ax_right.tick_params(axis="y", labelleft=False)
+    axes_groups.append([ax_left, ax_right])
+
+for axes in axes_groups:
+    for ax in axes:
         ax.tick_params(axis="both", labelsize=tick_label_fontsize)
 
 norb_range = [4, 8, 12, 16]
 
-title = "Quad Ham evo"
 plot_results(
-    axes[0],
+    axes_groups[0],
     benchmark_names=BENCHMARK_NAMES_QUAD_HAM,
     norb_range=norb_range,
-    title=title,
-    ylim=(1e-4, 2e2),
+    # ylim=(1e-4, 2e2),
 )
-
-title = "DF Trotter"
 plot_results(
-    axes[1],
+    axes_groups[1],
+    benchmark_names=BENCHMARK_NAMES_DIAG_COULOMB,
+    norb_range=norb_range,
+)
+plot_results(
+    axes_groups[2],
     benchmark_names=BENCHMARK_NAMES_TROTTER,
     norb_range=norb_range,
-    title=title,
-    ylim=(1e-3, 1e3),
+    # ylim=(1e-3, 1e3),
 )
-
-title = "Mol Ham action"
 plot_results(
-    axes[2],
+    axes_groups[3],
     benchmark_names=BENCHMARK_NAMES_OP_ACTION,
     norb_range=norb_range,
-    title=title,
-    ylim=(5e-5, 2e3),
+    # ylim=(5e-5, 2e3),
 )
+group_titles = [
+    "Quadratic Hamiltonian evolution",
+    "Diagonal Coulomb evolution",
+    "Double factorized Trotter",
+    "Molecular Hamiltonian operator action",
+]
 
-for ax_list in axes[:2]:
-    for ax in ax_list:
-        ax.tick_params(axis="x", labelbottom=False)
-for ax in axes[2]:
-    ax.set_xlabel("# orbitals", fontsize=axis_label_fontsize)
+for (row, col), title, axes in zip(group_positions, group_titles, axes_groups):
+    axes[0].set_title("1/2 filling", fontsize=title_fontsize)
+    axes[1].set_title("1/4 filling", fontsize=title_fontsize)
+    ax_span = fig.add_subplot(outer_gs[row, col])
+    ax_span.set_axis_off()
+    ax_span.set_title(title, fontsize=title_fontsize, fontweight="bold", pad=30)
 
-axes[0, 0].set_title("1/2 filling", fontsize=title_fontsize)
-axes[0, 1].set_title("1/4 filling", fontsize=title_fontsize)
-
-handles, labels = axes[0, 0].get_legend_handles_labels()
-# Place legend centered below the entire figure
+handles, labels = axes_groups[0][0].get_legend_handles_labels()
 fig.legend(
     handles,
     labels,
     loc="lower center",
-    ncol=3,  # tweak based on how many entries you have
+    ncol=3,
     fontsize=legend_fontsize,
 )
+fig.subplots_adjust(bottom=0.14)
 
-# Reserve extra bottom margin for the legend
-fig.tight_layout()
-fig.subplots_adjust(bottom=0.13)
 filepath = Path("plots/sim.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
-plt.savefig(filepath)
+plt.savefig(filepath, bbox_inches="tight")
 print(f"Saved figure to {filepath}.")
