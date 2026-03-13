@@ -633,7 +633,7 @@ wheels = [
 
 [[package]]
 name = "ffsim"
-version = "0.0.71.dev0"
+version = "0.0.72.dev0"
 source = { editable = "../ffsim" }
 dependencies = [
     { name = "jax" },

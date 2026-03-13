@@ -172,8 +172,8 @@ def plot_results(
             times_single_threaded.items(), times_multi_threaded.items()
         ):
             times, stats_q_25, stats_q_75 = zip(*data_single)
-            yerr_a = [t - x for t, x in zip(times, stats_q_25)]
-            yerr_b = [x - t for t, x in zip(times, stats_q_75)]
+            yerr_a = [max(0, t - x) for t, x in zip(times, stats_q_25)]
+            yerr_b = [max(0, x - t) for t, x in zip(times, stats_q_75)]
             ax.errorbar(
                 norb_range,
                 times,
@@ -184,8 +184,12 @@ def plot_results(
                 capsize=capsize,
             )
             times, stats_q_25, stats_q_75 = zip(*data_multi)
-            yerr_a = [t - x for t, x in zip(times, stats_q_25)]
-            yerr_b = [x - t for t, x in zip(times, stats_q_75)]
+            yerr_a = [max(0, t - x) for t, x in zip(times, stats_q_25)]
+            yerr_b = [max(0, x - t) for t, x in zip(times, stats_q_75)]
+            if any(err < 0 for err in yerr_a):
+                pass
+            if any(err < 0 for err in yerr_b):
+                pass
             ax.errorbar(
                 norb_range,
                 times,
