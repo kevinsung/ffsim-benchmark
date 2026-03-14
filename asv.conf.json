@@ -33,7 +33,7 @@
             "VECLIB_MAXIMUM_THREADS": "1"
         }
     },
-    "default_benchmark_timeout": 5000,
+    "default_benchmark_timeout": 10000,
     "benchmark_dir": "src/ffsim_benchmark",
     "env_dir": ".asv/env",
     "results_dir": ".asv/results",
