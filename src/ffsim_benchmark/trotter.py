@@ -125,7 +125,6 @@ class TrotterBenchmark:
             copy=False,
         )
 
-    @skip_for_params([(16, 0.5)])
     def time_simulate_trotter_double_factorized_fqe(self, *_):
         simulate_trotter_double_factorized_fqe(
             self.vec_fqe,
