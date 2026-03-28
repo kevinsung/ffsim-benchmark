@@ -17,7 +17,7 @@ class GivensDecompositionBenchmark:
     """Benchmark Givens decomposition of a unitary matrix."""
 
     param_names = ["norb"]
-    params = [(2, 8, 64, 512)]
+    params = [(2, 8, 64, 128, 256, 512)]
 
     def setup(self, norb: int):
         rng = np.random.default_rng(143607686584498699986780850514370601378)
