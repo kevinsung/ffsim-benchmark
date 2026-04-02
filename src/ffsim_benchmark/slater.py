@@ -45,8 +45,8 @@ class SampleSlaterBenchmarkReal:
         "shots",
     ]
     params = [
-        (100, 200, 400, 800),
-        (0.25, 0.5),
+        (400, 800, 1200, 1600),
+        (0.25,),
         (1_000,),
     ]
 
