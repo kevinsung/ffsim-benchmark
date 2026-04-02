@@ -175,7 +175,7 @@ def plot_normal_order(
         ax.set_ylim(*ylim)
 
 
-norb_range = [100, 200, 400, 800]
+norb_range = [400, 800, 1200, 1600]
 n_terms_range = [100, 1_000, 10_000, 100_000]
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 4))
