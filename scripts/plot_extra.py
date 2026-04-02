@@ -140,7 +140,6 @@ def plot_slater(
             capsize=capsize,
         )
 
-    ax.set_yscale("log")
     ax.set_xticks(range(len(norb_range)), labels=norb_range)
     if ylim:
         ax.set_ylim(*ylim)
