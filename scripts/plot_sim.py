@@ -221,7 +221,7 @@ outer_gs = fig.add_gridspec(2, 2, hspace=0.5, wspace=0.25)
 group_positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
 axes_groups = []
 for row, col in group_positions:
-    inner_gs = outer_gs[row, col].subgridspec(1, 2, wspace=0.05)
+    inner_gs = outer_gs[row, col].subgridspec(1, 2, wspace=0.07)
     ax_left = fig.add_subplot(inner_gs[0, 0])
     ax_right = fig.add_subplot(inner_gs[0, 1], sharey=ax_left)
     ax_right.tick_params(axis="y", labelleft=False)
