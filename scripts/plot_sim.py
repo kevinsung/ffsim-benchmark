@@ -8,6 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+import argparse
 import glob
 import itertools
 import json
@@ -66,11 +67,10 @@ def find_result_data(
     return max(candidates, key=lambda x: x[0])[1]
 
 
-(machine,) = (
-    d["machine"]
-    for d in [json.load(open(p)) for p in glob.glob(".asv/results/*/machine.json")]
-)
-RESULTS_DIR = f".asv/results/{machine}"
+parser = argparse.ArgumentParser()
+parser.add_argument("machine", help="Machine name (subdirectory of .asv/results/)")
+args = parser.parse_args()
+RESULTS_DIR = f".asv/results/{args.machine}"
 
 DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1, DESIRED_BENCHMARKS)
 DATA_MULTI_THREADED = find_result_data(RESULTS_DIR, 6, DESIRED_BENCHMARKS)
