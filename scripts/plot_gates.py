@@ -36,6 +36,11 @@ DESIRED_BENCHMARKS = (
     | set(BENCHMARK_NAMES_QUAD_HAM.values())
     | set(BENCHMARK_NAMES_DIAG_COULOMB.values())
 )
+DESIRED_BENCHMARKS_MULTI_THREADED = (
+    {BENCHMARK_NAMES_TROTTER["ffsim"]}
+    | {BENCHMARK_NAMES_QUAD_HAM["ffsim"]}
+    | {BENCHMARK_NAMES_DIAG_COULOMB["ffsim"]}
+)
 
 
 def find_result_data(
@@ -65,7 +70,9 @@ args = parser.parse_args()
 RESULTS_DIR = f".asv/results/{args.machine}"
 
 DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1, DESIRED_BENCHMARKS)
-DATA_MULTI_THREADED = find_result_data(RESULTS_DIR, 6, DESIRED_BENCHMARKS)
+DATA_MULTI_THREADED = find_result_data(
+    RESULTS_DIR, 6, DESIRED_BENCHMARKS_MULTI_THREADED
+)
 print(f"Single threaded commit: {DATA_SINGLE_THREADED['commit_hash'][:8]}")
 print(
     f"Single threaded date: {datetime.fromtimestamp(DATA_SINGLE_THREADED['date'] / 1000)}"
@@ -136,22 +143,29 @@ def plot_results(
                 ),
             )
         )
-        these_results = dict(
-            zip(
-                DATA_MULTI_THREADED["result_columns"],
-                DATA_MULTI_THREADED["results"][benchmark_name],
-            )
-        )
-        benchmark_results_multi_threaded[label] = dict(
-            zip(
-                itertools.product(*these_results["params"]),
+        if label == "ffsim":
+            these_results = dict(
                 zip(
-                    [np.nan if x is None else x for x in these_results["result"]],
-                    [np.nan if x is None else x for x in these_results["stats_q_25"]],
-                    [np.nan if x is None else x for x in these_results["stats_q_75"]],
-                ),
+                    DATA_MULTI_THREADED["result_columns"],
+                    DATA_MULTI_THREADED["results"][benchmark_name],
+                )
             )
-        )
+            benchmark_results_multi_threaded[label] = dict(
+                zip(
+                    itertools.product(*these_results["params"]),
+                    zip(
+                        [np.nan if x is None else x for x in these_results["result"]],
+                        [
+                            np.nan if x is None else x
+                            for x in these_results["stats_q_25"]
+                        ],
+                        [
+                            np.nan if x is None else x
+                            for x in these_results["stats_q_75"]
+                        ],
+                    ),
+                )
+            )
 
     for filling_fraction, ax in zip([0.5, 0.25], axes):
         times_single_threaded = {
@@ -163,9 +177,7 @@ def plot_results(
             for label, times in benchmark_results_multi_threaded.items()
         }
 
-        for (label_single, data_single), (label_multi, data_multi) in zip(
-            times_single_threaded.items(), times_multi_threaded.items()
-        ):
+        for label_single, data_single in times_single_threaded.items():
             times, stats_q_25, stats_q_75 = zip(*data_single)
             yerr_a = [max(0, t - x) for t, x in zip(times, stats_q_25)]
             yerr_b = [max(0, x - t) for t, x in zip(times, stats_q_75)]
@@ -178,24 +190,25 @@ def plot_results(
                 label=label_single,
                 capsize=capsize,
             )
-            if label_multi == "ffsim":
-                times, stats_q_25, stats_q_75 = zip(*data_multi)
-                yerr_a = [max(0, t - x) for t, x in zip(times, stats_q_25)]
-                yerr_b = [max(0, x - t) for t, x in zip(times, stats_q_75)]
-                if any(err < 0 for err in yerr_a):
-                    pass
-                if any(err < 0 for err in yerr_b):
-                    pass
-                ax.errorbar(
-                    norb_range,
-                    times,
-                    yerr=(yerr_a, yerr_b),
-                    fmt=fmts[label_multi],
-                    color=colors[label_multi],
-                    alpha=0.5,
-                    label=f"{label_multi}, {MULTI_THREADED_NUM_THREADS} threads",
-                    capsize=capsize,
-                )
+
+        for label_multi, data_multi in times_multi_threaded.items():
+            times, stats_q_25, stats_q_75 = zip(*data_multi)
+            yerr_a = [max(0, t - x) for t, x in zip(times, stats_q_25)]
+            yerr_b = [max(0, x - t) for t, x in zip(times, stats_q_75)]
+            if any(err < 0 for err in yerr_a):
+                pass
+            if any(err < 0 for err in yerr_b):
+                pass
+            ax.errorbar(
+                norb_range,
+                times,
+                yerr=(yerr_a, yerr_b),
+                fmt=fmts[label_multi],
+                color=colors[label_multi],
+                alpha=0.5,
+                label=f"{label_multi}, {MULTI_THREADED_NUM_THREADS} threads",
+                capsize=capsize,
+            )
 
         ax.set_yscale("log")
         ax.set_xticks(norb_range)
