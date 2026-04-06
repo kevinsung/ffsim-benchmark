@@ -45,7 +45,7 @@ for k in DATA_MULTI_THREADED["results"]:
 
 colors = {
     "Aer": "#ff7eb6",
-    "FQE": "#be95ff",
+    "FQE": "#8a3ffc",
     "ffsim": "#0f62fe",
 }
 fmts = {
