@@ -224,7 +224,7 @@ fig.legend(
     ncol=3,
     fontsize=legend_fontsize,
 )
-fig.subplots_adjust(bottom=0.14)
+fig.subplots_adjust(bottom=0.12)
 
 filepath = Path("plots/sim.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
