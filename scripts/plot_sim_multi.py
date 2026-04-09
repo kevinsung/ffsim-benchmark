@@ -73,9 +73,14 @@ args = parser.parse_args()
 RESULTS_DIR = f".asv/results/{args.machine}"
 
 DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1, DESIRED_BENCHMARKS)
+DATA_MULTI_THREADED = find_result_data(RESULTS_DIR, 6, DESIRED_BENCHMARKS)
 print(f"Single threaded commit: {DATA_SINGLE_THREADED['commit_hash'][:8]}")
 print(
     f"Single threaded date: {datetime.fromtimestamp(DATA_SINGLE_THREADED['date'] / 1000)}"
+)
+print(f"Multi threaded commit: {DATA_MULTI_THREADED['commit_hash'][:8]}")
+print(
+    f"Multi threaded date: {datetime.fromtimestamp(DATA_MULTI_THREADED['date'] / 1000)}"
 )
 
 assert (
@@ -83,9 +88,18 @@ assert (
     == int(DATA_SINGLE_THREADED["env_vars"]["RAYON_NUM_THREADS"])
     == 1
 )
+assert (
+    int(DATA_MULTI_THREADED["env_vars"]["OMP_NUM_THREADS"])
+    == int(DATA_MULTI_THREADED["env_vars"]["RAYON_NUM_THREADS"])
+    > 1
+)
+MULTI_THREADED_NUM_THREADS = int(DATA_MULTI_THREADED["env_vars"]["OMP_NUM_THREADS"])
 
 print("Single-threaded benchmarks:")
 for k in DATA_SINGLE_THREADED["results"]:
+    print(f"\t{k}")
+print("Multi-threaded benchmarks:")
+for k in DATA_MULTI_THREADED["results"]:
     print(f"\t{k}")
 
 
@@ -113,7 +127,8 @@ def plot_results(
     norb_range: list[int],
     ylim: tuple[float, float] | None = None,
 ) -> None:
-    benchmark_results = {}
+    benchmark_results_single_threaded = {}
+    benchmark_results_multi_threaded = {}
     for label, benchmark_name in benchmark_names.items():
         these_results = dict(
             zip(
@@ -121,7 +136,23 @@ def plot_results(
                 DATA_SINGLE_THREADED["results"][benchmark_name],
             )
         )
-        benchmark_results[label] = dict(
+        benchmark_results_single_threaded[label] = dict(
+            zip(
+                itertools.product(*these_results["params"]),
+                zip(
+                    [np.nan if x is None else x for x in these_results["result"]],
+                    [np.nan if x is None else x for x in these_results["stats_q_25"]],
+                    [np.nan if x is None else x for x in these_results["stats_q_75"]],
+                ),
+            )
+        )
+        these_results = dict(
+            zip(
+                DATA_MULTI_THREADED["result_columns"],
+                DATA_MULTI_THREADED["results"][benchmark_name],
+            )
+        )
+        benchmark_results_multi_threaded[label] = dict(
             zip(
                 itertools.product(*these_results["params"]),
                 zip(
@@ -133,22 +164,45 @@ def plot_results(
         )
 
     for filling_fraction, ax in zip([0.5, 0.25], axes):
-        times = {
-            label: [results[(str(norb), str(filling_fraction))] for norb in norb_range]
-            for label, results in benchmark_results.items()
+        times_single_threaded = {
+            label: [times[(str(norb), str(filling_fraction))] for norb in norb_range]
+            for label, times in benchmark_results_single_threaded.items()
+        }
+        times_multi_threaded = {
+            label: [times[(str(norb), str(filling_fraction))] for norb in norb_range]
+            for label, times in benchmark_results_multi_threaded.items()
         }
 
-        for label, data in times.items():
-            t, stats_q_25, stats_q_75 = zip(*data)
-            yerr_a = [max(0, ti - x) for ti, x in zip(t, stats_q_25)]
-            yerr_b = [max(0, x - ti) for ti, x in zip(t, stats_q_75)]
+        for (label_single, data_single), (label_multi, data_multi) in zip(
+            times_single_threaded.items(), times_multi_threaded.items()
+        ):
+            times, stats_q_25, stats_q_75 = zip(*data_single)
+            yerr_a = [max(0, t - x) for t, x in zip(times, stats_q_25)]
+            yerr_b = [max(0, x - t) for t, x in zip(times, stats_q_75)]
             ax.errorbar(
                 norb_range,
-                t,
+                times,
                 yerr=(yerr_a, yerr_b),
-                fmt=fmts[label],
-                color=colors[label],
-                label=label,
+                fmt=fmts[label_single],
+                color=colors[label_single],
+                label=label_single,
+                capsize=capsize,
+            )
+            times, stats_q_25, stats_q_75 = zip(*data_multi)
+            yerr_a = [max(0, t - x) for t, x in zip(times, stats_q_25)]
+            yerr_b = [max(0, x - t) for t, x in zip(times, stats_q_75)]
+            if any(err < 0 for err in yerr_a):
+                pass
+            if any(err < 0 for err in yerr_b):
+                pass
+            ax.errorbar(
+                norb_range,
+                times,
+                yerr=(yerr_a, yerr_b),
+                fmt=fmts[label_multi],
+                color=colors[label_multi],
+                alpha=0.5,
+                label=f"{label_multi}, {MULTI_THREADED_NUM_THREADS} threads",
                 capsize=capsize,
             )
 
@@ -226,7 +280,7 @@ fig.legend(
 )
 fig.subplots_adjust(bottom=0.14)
 
-filepath = Path("plots/sim.pdf")
+filepath = Path("plots/sim_multi.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
 plt.savefig(filepath, bbox_inches="tight")
 print(f"Saved figure to {filepath}.")
