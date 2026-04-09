@@ -8,6 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+import argparse
 import glob
 import itertools
 import json
@@ -19,11 +20,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 SLATER_BENCHMARK_NAMES = {
-    "dppy": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_gs_dppy",
+    "DPPy": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_gs_dppy",
     "ffsim": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_ffsim",
 }
 NORMAL_ORDER_BENCHMARK_NAMES = {
-    "openfermion": "fermion_operator.FermionOperatorBenchmark.time_normal_order_openfermion",
+    "OpenFermion": "fermion_operator.FermionOperatorBenchmark.time_normal_order_openfermion",
     "ffsim": "fermion_operator.FermionOperatorBenchmark.time_normal_order_ffsim",
 }
 DESIRED_BENCHMARKS = set(SLATER_BENCHMARK_NAMES.values()) | set(
@@ -52,11 +53,10 @@ def find_result_data(
     return max(candidates, key=lambda x: x[0])[1]
 
 
-(machine,) = (
-    d["machine"]
-    for d in [json.load(open(p)) for p in glob.glob(".asv/results/*/machine.json")]
-)
-RESULTS_DIR = f".asv/results/{machine}"
+parser = argparse.ArgumentParser()
+parser.add_argument("machine", help="Machine name (subdirectory of .asv/results/)")
+args = parser.parse_args()
+RESULTS_DIR = f".asv/results/{args.machine}"
 
 DATA = find_result_data(RESULTS_DIR, 1, DESIRED_BENCHMARKS)
 print(f"Commit: {DATA['commit_hash'][:8]}")
@@ -75,13 +75,13 @@ for k in DATA["results"]:
 
 colors = {
     "ffsim": "#0f62fe",
-    "dppy": "#42be65",
-    "openfermion": "#3ddbd9",
+    "DPPy": "#42be65",
+    "OpenFermion": "#3ddbd9",
 }
 markers = {
     "ffsim": "o",
-    "dppy": "s",
-    "openfermion": "v",
+    "DPPy": "s",
+    "OpenFermion": "v",
 }
 
 capsize = 4
