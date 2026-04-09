@@ -113,7 +113,7 @@ g_mac_1t = g_linux_6t + 2 * BAR_WIDTH + GROUP_GAP
 g_mac_6t = g_mac_1t + 2 * BAR_WIDTH + GROUP_GAP
 
 FFSIM_COLOR = "#0f62fe"
-FQE_COLOR = "#8a3ffc"
+FQE_COLOR = "#be95ff"
 ALPHA_6T = 0.5
 EDGECOLOR = "black"
 

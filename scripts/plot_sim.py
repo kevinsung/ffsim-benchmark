@@ -91,7 +91,7 @@ for k in DATA_SINGLE_THREADED["results"]:
 
 colors = {
     "Aer": "#ff7eb6",
-    "FQE": "#8a3ffc",
+    "FQE": "#be95ff",
     "ffsim": "#0f62fe",
 }
 fmts = {
