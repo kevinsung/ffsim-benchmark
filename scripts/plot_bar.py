@@ -123,8 +123,8 @@ tick_label_fontsize = 11
 axis_label_fontsize = 12
 title_fontsize = 13
 
-LINUX_HATCH = None
-MAC_HATCH = "//"
+FFSIM_HATCH = "//"
+FQE_HATCH = None
 
 
 def draw_bar(ax, x_pos, times, color, alpha=1.0, hatch=None):
@@ -159,27 +159,41 @@ def plot_bar_panel(ax, benchmark_names: dict[str, str], has_mac_multi: bool) -> 
     fqe_bname = benchmark_names["FQE"]
 
     # Linux 1T
-    draw_bar(ax, g_linux_1t, get_time(linux_1t, fqe_bname), FQE_COLOR)
-    draw_bar(ax, g_linux_1t + BAR_WIDTH, get_time(linux_1t, ffsim_bname), FFSIM_COLOR)
+    draw_bar(ax, g_linux_1t, get_time(linux_1t, fqe_bname), FQE_COLOR, hatch=FQE_HATCH)
+    draw_bar(
+        ax,
+        g_linux_1t + BAR_WIDTH,
+        get_time(linux_1t, ffsim_bname),
+        FFSIM_COLOR,
+        hatch=FFSIM_HATCH,
+    )
 
     # Linux 6T
-    draw_bar(ax, g_linux_6t, get_time(linux_6t, fqe_bname), FQE_COLOR, alpha=ALPHA_6T)
+    draw_bar(
+        ax,
+        g_linux_6t,
+        get_time(linux_6t, fqe_bname),
+        FQE_COLOR,
+        alpha=ALPHA_6T,
+        hatch=FQE_HATCH,
+    )
     draw_bar(
         ax,
         g_linux_6t + BAR_WIDTH,
         get_time(linux_6t, ffsim_bname),
         FFSIM_COLOR,
         alpha=ALPHA_6T,
+        hatch=FFSIM_HATCH,
     )
 
     # Mac 1T
-    draw_bar(ax, g_mac_1t, get_time(mac_1t, fqe_bname), FQE_COLOR, hatch=MAC_HATCH)
+    draw_bar(ax, g_mac_1t, get_time(mac_1t, fqe_bname), FQE_COLOR, hatch=FQE_HATCH)
     draw_bar(
         ax,
         g_mac_1t + BAR_WIDTH,
         get_time(mac_1t, ffsim_bname),
         FFSIM_COLOR,
-        hatch=MAC_HATCH,
+        hatch=FFSIM_HATCH,
     )
 
     # Mac 6T (ffsim only, and only for panels where it exists)
@@ -190,7 +204,7 @@ def plot_bar_panel(ax, benchmark_names: dict[str, str], has_mac_multi: bool) -> 
             get_time(mac_6t, ffsim_bname),
             FFSIM_COLOR,
             alpha=ALPHA_6T,
-            hatch=MAC_HATCH,
+            hatch=FFSIM_HATCH,
         )
 
     # ax.set_yscale("log")
@@ -219,12 +233,17 @@ def plot_bar_panel(ax, benchmark_names: dict[str, str], has_mac_multi: bool) -> 
 # Build legend handles
 legend_handles = [
     mpatches.Patch(
-        facecolor=FQE_COLOR, edgecolor=EDGECOLOR, linewidth=0, label="FQE Linux 1 CPU"
+        facecolor=FQE_COLOR,
+        edgecolor=EDGECOLOR,
+        linewidth=0,
+        hatch=FQE_HATCH,
+        label="FQE Linux 1 CPU",
     ),
     mpatches.Patch(
         facecolor=FFSIM_COLOR,
         edgecolor=EDGECOLOR,
         linewidth=0,
+        hatch=FFSIM_HATCH,
         label="ffsim Linux 1 CPU",
     ),
     mpatches.Patch(
@@ -232,6 +251,7 @@ legend_handles = [
         edgecolor=EDGECOLOR,
         linewidth=0,
         alpha=ALPHA_6T,
+        hatch=FQE_HATCH,
         label="FQE Linux 6 CPUs",
     ),
     mpatches.Patch(
@@ -239,20 +259,21 @@ legend_handles = [
         edgecolor=EDGECOLOR,
         linewidth=0,
         alpha=ALPHA_6T,
+        hatch=FFSIM_HATCH,
         label="ffsim Linux 6 CPUs",
     ),
     mpatches.Patch(
         facecolor=FQE_COLOR,
         edgecolor=EDGECOLOR,
         linewidth=0,
-        hatch=MAC_HATCH,
+        hatch=FQE_HATCH,
         label="FQE Mac 1 CPU",
     ),
     mpatches.Patch(
         facecolor=FFSIM_COLOR,
         edgecolor=EDGECOLOR,
         linewidth=0,
-        hatch=MAC_HATCH,
+        hatch=FFSIM_HATCH,
         label="ffsim Mac 1 CPU",
     ),
     mpatches.Patch(fill=False, edgecolor="none", linewidth=0, label=""),
@@ -261,7 +282,7 @@ legend_handles = [
         edgecolor=EDGECOLOR,
         linewidth=0,
         alpha=ALPHA_6T,
-        hatch=MAC_HATCH,
+        hatch=FFSIM_HATCH,
         label="ffsim Mac 6 CPUs",
     ),
 ]
