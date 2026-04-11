@@ -33,3 +33,4 @@ select = ["E", "F", "I", "N", "NPY"]
 
 [tool.uv.sources]
 ffsim = { path = "../ffsim", editable = true }
+fqe = { path = "../OpenFermion-FQE", editable = true }
