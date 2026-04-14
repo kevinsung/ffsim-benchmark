@@ -699,7 +699,7 @@ requires-dist = [
     { name = "asv", marker = "extra == 'dev'" },
     { name = "dppy", specifier = ">=0.3.3" },
     { name = "ffsim", editable = "../ffsim" },
-    { name = "fqe", editable = "../OpenFermion-FQE" },
+    { name = "fqe" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "qiskit-aer" },
@@ -769,7 +769,7 @@ wheels = [
 [[package]]
 name = "fqe"
 version = "0.3.0"
-source = { editable = "../OpenFermion-FQE" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cirq-core" },
     { name = "cirq-google" },
@@ -781,19 +781,7 @@ dependencies = [
     { name = "scipy" },
     { name = "sphinx" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "cirq-core", specifier = ">=0.15.0" },
-    { name = "cirq-google", specifier = ">=0.15.0" },
-    { name = "cython" },
-    { name = "jupyter" },
-    { name = "numpy", specifier = ">=1.14" },
-    { name = "openfermion", specifier = ">=1.5.0" },
-    { name = "pyasn1-modules", specifier = "==0.2.7" },
-    { name = "scipy" },
-    { name = "sphinx", specifier = ">=2.3.1" },
-]
+sdist = { url = "https://files.pythonhosted.org/packages/ce/e0/f105e565e32b7924812633d29c236e083a8ae9f397f8dc8f16b4381837cc/fqe-0.3.0.tar.gz", hash = "sha256:7aadb5292253ad82dd282a7e9d773134787e05e267ea8c995f5d9ce060074518", size = 148137, upload-time = "2022-07-27T23:24:55.943Z" }
 
 [[package]]
 name = "google-api-core"
