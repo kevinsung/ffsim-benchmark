@@ -19,10 +19,11 @@
     ],
     "matrix": {
         "req": {
+            "dppy": [],
             "fqe": [],
             "openfermion": [],
+            "pyscf": [],
             "qiskit-aer": [],
-            "dppy": [],
             "puccinialin": []
         },
         "env_nobuild": {
