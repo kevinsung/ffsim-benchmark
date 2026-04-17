@@ -26,13 +26,15 @@
             "qiskit-aer": [],
             "puccinialin": []
         },
+        "env": {
+            "CMAKE_CONFIGURE_ARGS": "-DBUILD_MARCH_NATIVE=ON"
+        },
         "env_nobuild": {
             "RAYON_NUM_THREADS": "6",
             "OMP_NUM_THREADS": "6",
             "OPENBLAS_NUM_THREADS": "6",
             "MKL_NUM_THREADS": "6",
-            "VECLIB_MAXIMUM_THREADS": "6",
-            "CMAKE_CONFIGURE_ARGS": "-DBUILD_MARCH_NATIVE=ON"
+            "VECLIB_MAXIMUM_THREADS": "6"
         }
     },
     "default_benchmark_timeout": 10000,
