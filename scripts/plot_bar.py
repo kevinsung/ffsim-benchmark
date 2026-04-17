@@ -8,6 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+import argparse
 import glob
 import itertools
 import json
@@ -44,8 +45,16 @@ PANELS_WITH_MAC_MULTI = [True, True, True, False]
 NORB = 16
 FILLING_FRACTION = 0.5
 
-LINUX_RESULTS_DIR = ".asv/results/kjs-thinkpad-x13"
-MAC_RESULTS_DIR = ".asv/results/MacBookPro"
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "linux_machine", help="Linux machine name (subdirectory of .asv/results/)"
+)
+parser.add_argument(
+    "mac_machine", help="Mac machine name (subdirectory of .asv/results/)"
+)
+args = parser.parse_args()
+LINUX_RESULTS_DIR = f".asv/results/{args.linux_machine}"
+MAC_RESULTS_DIR = f".asv/results/{args.mac_machine}"
 
 
 def find_result_data(results_dir: str, num_threads: int) -> dict | None:
