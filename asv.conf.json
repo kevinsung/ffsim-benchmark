@@ -30,7 +30,8 @@
             "OMP_NUM_THREADS": "1",
             "OPENBLAS_NUM_THREADS": "1",
             "MKL_NUM_THREADS": "1",
-            "VECLIB_MAXIMUM_THREADS": "1"
+            "VECLIB_MAXIMUM_THREADS": "1",
+            "CMAKE_CONFIGURE_ARGS": "-DBUILD_MARCH_NATIVE=ON"
         }
     },
     "default_benchmark_timeout": 10000,
