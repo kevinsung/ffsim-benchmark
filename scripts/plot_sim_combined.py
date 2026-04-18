@@ -349,7 +349,7 @@ def plot_bar_panel(ax, benchmark_names: dict[str, str], has_mac_multi: bool) -> 
 
 # ─── Build figure ───────────────────────────────────────────────────────────────
 fig = plt.figure(figsize=(15, 10))
-outer_gs = fig.add_gridspec(4, 3, hspace=0.1, wspace=0.35, width_ratios=[0.18, 1, 1])
+outer_gs = fig.add_gridspec(4, 3, hspace=0.1, wspace=0.35, width_ratios=[0.2, 1, 1])
 
 # Middle column: sim panels (each split into two sub-axes for filling fractions)
 sim_axes_groups = []
