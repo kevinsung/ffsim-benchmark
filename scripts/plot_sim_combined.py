@@ -360,7 +360,9 @@ for row in range(4):
         ax_right = fig.add_subplot(inner_gs[0, 1], sharey=ax_left)
     else:
         ax_left = fig.add_subplot(inner_gs[0, 0], sharex=sim_axes_groups[0][0])
-        ax_right = fig.add_subplot(inner_gs[0, 1], sharey=ax_left, sharex=sim_axes_groups[0][1])
+        ax_right = fig.add_subplot(
+            inner_gs[0, 1], sharey=ax_left, sharex=sim_axes_groups[0][1]
+        )
     ax_right.tick_params(axis="y", labelleft=False)
     sim_axes_groups.append([ax_left, ax_right])
 
@@ -414,9 +416,13 @@ for row, (title, sim_axes, bar_ax) in enumerate(
     ax_label = fig.add_subplot(outer_gs[row, 0])
     ax_label.set_axis_off()
     ax_label.text(
-        0.5, 0.5, title,
-        fontsize=title_fontsize, fontweight="bold",
-        ha="center", va="center",
+        0.1,
+        0.5,
+        title,
+        fontsize=title_fontsize,
+        fontweight="bold",
+        ha="center",
+        va="center",
         transform=ax_label.transAxes,
         wrap=True,
     )
@@ -432,19 +438,27 @@ bar_legend_handles = [
         label="FQE Linux 1 CPU",
     ),
     mpatches.Patch(
-        facecolor=FFSIM_COLOR,
-        edgecolor=EDGECOLOR,
-        linewidth=0,
-        hatch=FFSIM_HATCH,
-        label="ffsim Linux 1 CPU",
-    ),
-    mpatches.Patch(
         facecolor=FQE_COLOR,
         edgecolor=EDGECOLOR,
         linewidth=0,
         alpha=ALPHA_6T,
         hatch=FQE_HATCH,
         label="FQE Linux 6 CPUs",
+    ),
+    mpatches.Patch(
+        facecolor=FQE_COLOR,
+        edgecolor=EDGECOLOR,
+        linewidth=0,
+        hatch=FQE_HATCH,
+        label="FQE Mac 1 CPU",
+    ),
+    mpatches.Patch(fill=False, edgecolor="none", linewidth=0, label=""),
+    mpatches.Patch(
+        facecolor=FFSIM_COLOR,
+        edgecolor=EDGECOLOR,
+        linewidth=0,
+        hatch=FFSIM_HATCH,
+        label="ffsim Linux 1 CPU",
     ),
     mpatches.Patch(
         facecolor=FFSIM_COLOR,
@@ -455,20 +469,12 @@ bar_legend_handles = [
         label="ffsim Linux 6 CPUs",
     ),
     mpatches.Patch(
-        facecolor=FQE_COLOR,
-        edgecolor=EDGECOLOR,
-        linewidth=0,
-        hatch=FQE_HATCH,
-        label="FQE Mac 1 CPU",
-    ),
-    mpatches.Patch(
         facecolor=FFSIM_COLOR,
         edgecolor=EDGECOLOR,
         linewidth=0,
         hatch=FFSIM_HATCH,
         label="ffsim Mac 1 CPU",
     ),
-    mpatches.Patch(fill=False, edgecolor="none", linewidth=0, label=""),
     mpatches.Patch(
         facecolor=FFSIM_COLOR,
         edgecolor=EDGECOLOR,
@@ -479,23 +485,34 @@ bar_legend_handles = [
     ),
 ]
 
+fig.canvas.draw()
+
+left_pos = sim_axes_groups[-1][0].get_position()
+right_pos = sim_axes_groups[-1][1].get_position()
+sim_cx = (left_pos.x0 + right_pos.x1) / 2
+sim_bot = min(left_pos.y0, right_pos.y0)
+
+bar_pos = bar_axes[-1].get_position()
+bar_cx = (bar_pos.x0 + bar_pos.x1) / 2
+bar_bot = bar_pos.y0
+
 fig.legend(
     handles_sim,
     labels_sim,
-    loc="lower left",
-    bbox_to_anchor=(0.02, 0.01),
+    loc="upper center",
+    bbox_to_anchor=(sim_cx, sim_bot - 0.06),
+    bbox_transform=fig.transFigure,
     ncol=3,
     fontsize=legend_fontsize,
 )
 fig.legend(
     handles=bar_legend_handles,
-    loc="lower right",
-    bbox_to_anchor=(0.98, 0.01),
+    loc="upper center",
+    bbox_to_anchor=(bar_cx, bar_bot - 0.06),
+    bbox_transform=fig.transFigure,
     ncol=2,
     fontsize=legend_fontsize,
 )
-
-fig.subplots_adjust(bottom=0.13)
 
 filepath = Path("plots/sim_combined.pdf")
 os.makedirs(filepath.parent, exist_ok=True)
