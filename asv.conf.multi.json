@@ -20,14 +20,11 @@
     "matrix": {
         "req": {
             "dppy": [],
-            "fqe": [],
+            "fqe": ["git+https://github.com/quantumlib/OpenFermion-FQE.git@v0.3.0"],
             "openfermion": [],
-            "pyscf": [],
+            "pyscf": ["git+https://github.com/kevinsung/pyscf.git@cmake-native"],
             "qiskit-aer": [],
             "puccinialin": []
-        },
-        "env": {
-            "CMAKE_CONFIGURE_ARGS": "-DBUILD_MARCH_NATIVE=ON"
         },
         "env_nobuild": {
             "RAYON_NUM_THREADS": "6",
@@ -37,6 +34,7 @@
             "VECLIB_MAXIMUM_THREADS": "6"
         }
     },
+    "install_timeout": 10000,
     "default_benchmark_timeout": 10000,
     "benchmark_dir": "src/ffsim_benchmark",
     "env_dir": ".asv/env",
