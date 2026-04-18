@@ -663,17 +663,19 @@ dev = [
     { name = "coverage" },
     { name = "maturin" },
     { name = "mypy" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "typos" },
+]
+docs = [
     { name = "myst-parser" },
     { name = "nbmake" },
     { name = "nbsphinx" },
-    { name = "pre-commit" },
-    { name = "pytest" },
     { name = "qiskit", extras = ["visualization"] },
     { name = "qiskit-sphinx-theme" },
-    { name = "ruff" },
     { name = "sphinx" },
     { name = "sphinx-autodoc-typehints" },
-    { name = "typos" },
 ]
 
 [[package]]
