@@ -113,10 +113,10 @@ class MolecularHamiltonianActionComplexBenchmark:
         # initialize ffsim cache
         ffsim.init_cache(self.norb, self.nelec)
 
-    def time_mol_ham_action_real_ffsim(self, *_):
+    def time_mol_ham_action_complex_ffsim(self, *_):
         _ = self.linop_ffsim @ self.vec_ffsim
 
-    def time_mol_ham_action_real_fqe_restricted(self, *_):
+    def time_mol_ham_action_complex_fqe_restricted(self, *_):
         _ = self.wfn_fqe.apply(self.op_fqe_restricted)
 
 
@@ -156,5 +156,5 @@ class MolecularHamiltonianActionN2Benchmark:
     def time_mol_ham_action_n2_ffsim(self, *_):
         _ = self.linop_ffsim @ self.vec_ffsim
 
-    def time_mol_ham_action_real_fqe_restricted(self, *_):
+    def time_mol_ham_action_n2_fqe_restricted(self, *_):
         _ = self.wfn_fqe.apply(self.op_fqe_restricted)
