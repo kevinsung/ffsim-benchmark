@@ -1,8 +1,8 @@
 {
     "version": 1,
     "project": "ffsim",
-    "project_url": "https://github.com/qiskit-community/ffsim",
-    "repo": "https://github.com/qiskit-community/ffsim",
+    "project_url": "https://github.com/kevinsung/ffsim",
+    "repo": "https://github.com/kevinsung/ffsim",
     "build_command": [
         "python -m pip install build maturin",
         "python -m build",
@@ -13,7 +13,7 @@
     ],
     "dvcs": "git",
     "environment_type": "virtualenv",
-    "show_commit_url": "http://github.com/qiskit-community/ffsim/commit/",
+    "show_commit_url": "http://github.com/kevinsung/ffsim/commit/",
     "pythons": [
         "3.12"
     ],
