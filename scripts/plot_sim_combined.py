@@ -173,10 +173,10 @@ FFSIM_HATCH = "//"
 FQE_HATCH = None
 
 capsize = 4
-legend_fontsize = 11
-tick_label_fontsize = 11
-axis_label_fontsize = 12
-title_fontsize = 13
+legend_fontsize = 12
+tick_label_fontsize = 13
+axis_label_fontsize = 14
+title_fontsize = 15
 
 
 def plot_lines(
@@ -405,7 +405,7 @@ group_titles = [
     "Quadratic\nHamiltonian\nevolution",
     "Diagonal\nCoulomb\nevolution",
     "Double\nfactorized\nTrotter",
-    "Molecular\nHamiltonian\noperator action",
+    "Molecular\nHamiltonian\noperator\naction",
 ]
 for row, (title, sim_axes, bar_ax) in enumerate(
     zip(group_titles, sim_axes_groups, bar_axes)
@@ -416,7 +416,7 @@ for row, (title, sim_axes, bar_ax) in enumerate(
     ax_label = fig.add_subplot(outer_gs[row, 0])
     ax_label.set_axis_off()
     ax_label.text(
-        0.1,
+        0.0,
         0.5,
         title,
         fontsize=title_fontsize,
