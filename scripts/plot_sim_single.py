@@ -1,0 +1,232 @@
+# (C) Copyright IBM 2026.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
+import argparse
+import glob
+import itertools
+import json
+import os
+from datetime import datetime
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+BENCHMARK_NAMES_TROTTER = {
+    "Aer": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_qiskit",
+    "FQE": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe",
+    "ffsim": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_ffsim",
+}
+BENCHMARK_NAMES_QUAD_HAM = {
+    "Aer": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_qiskit",
+    "FQE": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_fqe",
+    "ffsim": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_ffsim",
+}
+BENCHMARK_NAMES_OP_ACTION = {
+    "FQE": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_fqe_restricted",
+    "ffsim": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_ffsim",
+}
+BENCHMARK_NAMES_DIAG_COULOMB = {
+    "Aer": "diag_coulomb.DiagCoulombEvoBenchmark.time_diag_coulomb_evolution_qiskit",
+    "FQE": "diag_coulomb.DiagCoulombEvoBenchmark.time_diag_coulomb_evolution_fqe",
+    "ffsim": "diag_coulomb.DiagCoulombEvoBenchmark.time_diag_coulomb_evolution_ffsim",
+}
+DESIRED_BENCHMARKS = (
+    set(BENCHMARK_NAMES_TROTTER.values())
+    | set(BENCHMARK_NAMES_QUAD_HAM.values())
+    | set(BENCHMARK_NAMES_OP_ACTION.values())
+    | set(BENCHMARK_NAMES_DIAG_COULOMB.values())
+)
+
+
+def find_result_data(
+    results_dir: str, num_threads: int, required_benchmarks: set[str] | None = None
+) -> dict:
+    candidates = []
+    for path in glob.glob(f"{results_dir}/*.json"):
+        if path.endswith("machine.json"):
+            continue
+        with open(path) as f:
+            data = json.load(f)
+        if int(data.get("env_vars", {}).get("OMP_NUM_THREADS", -1)) == num_threads:
+            if required_benchmarks is None or required_benchmarks.issubset(
+                data.get("results", {}).keys()
+            ):
+                candidates.append((os.path.getmtime(path), data))
+    if not candidates:
+        raise FileNotFoundError(
+            f"No result file found with OMP_NUM_THREADS={num_threads} in {results_dir}"
+        )
+    return max(candidates, key=lambda x: x[0])[1]
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("machine", help="Machine name (subdirectory of .asv/results/)")
+args = parser.parse_args()
+RESULTS_DIR = f".asv/results/{args.machine}"
+
+DATA_SINGLE_THREADED = find_result_data(RESULTS_DIR, 1, DESIRED_BENCHMARKS)
+print(f"Single threaded commit: {DATA_SINGLE_THREADED['commit_hash'][:8]}")
+print(
+    f"Single threaded date: {datetime.fromtimestamp(DATA_SINGLE_THREADED['date'] / 1000)}"
+)
+
+assert (
+    int(DATA_SINGLE_THREADED["env_vars"]["OMP_NUM_THREADS"])
+    == int(DATA_SINGLE_THREADED["env_vars"]["RAYON_NUM_THREADS"])
+    == 1
+)
+
+print("Single-threaded benchmarks:")
+for k in DATA_SINGLE_THREADED["results"]:
+    print(f"\t{k}")
+
+
+colors = {
+    "Aer": "#ff7eb6",
+    "FQE": "#be95ff",
+    "ffsim": "#0f62fe",
+}
+fmts = {
+    "Aer": "v-.",
+    "FQE": "s:",
+    "ffsim": "o--",
+}
+
+capsize = 4
+legend_fontsize = 12
+tick_label_fontsize = 13
+axis_label_fontsize = 14
+title_fontsize = 15
+
+
+def plot_results(
+    axes,
+    benchmark_names: dict[str, str],
+    norb_range: list[int],
+    ylim: tuple[float, float] | None = None,
+) -> None:
+    benchmark_results = {}
+    for label, benchmark_name in benchmark_names.items():
+        these_results = dict(
+            zip(
+                DATA_SINGLE_THREADED["result_columns"],
+                DATA_SINGLE_THREADED["results"][benchmark_name],
+            )
+        )
+        benchmark_results[label] = dict(
+            zip(
+                itertools.product(*these_results["params"]),
+                zip(
+                    [np.nan if x is None else x for x in these_results["result"]],
+                    [np.nan if x is None else x for x in these_results["stats_q_25"]],
+                    [np.nan if x is None else x for x in these_results["stats_q_75"]],
+                ),
+            )
+        )
+
+    for filling_fraction, ax in zip([0.5, 0.25], axes):
+        times = {
+            label: [results[(str(norb), str(filling_fraction))] for norb in norb_range]
+            for label, results in benchmark_results.items()
+        }
+
+        for label, data in times.items():
+            t, stats_q_25, stats_q_75 = zip(*data)
+            yerr_a = [max(0, ti - x) for ti, x in zip(t, stats_q_25)]
+            yerr_b = [max(0, x - ti) for ti, x in zip(t, stats_q_75)]
+            ax.errorbar(
+                norb_range,
+                t,
+                yerr=(yerr_a, yerr_b),
+                fmt=fmts[label],
+                color=colors[label],
+                label=label,
+                capsize=capsize,
+            )
+
+        ax.set_yscale("log")
+        ax.set_xticks(norb_range)
+        if ylim:
+            ax.set_ylim(*ylim)
+        ax.set_xlabel("# orbitals", fontsize=axis_label_fontsize)
+
+    axes[0].set_ylabel("Time (s)", fontsize=axis_label_fontsize)
+
+
+fig = plt.figure(figsize=(14, 10))
+outer_gs = fig.add_gridspec(2, 2, hspace=0.5, wspace=0.25)
+
+group_positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
+axes_groups = []
+for row, col in group_positions:
+    inner_gs = outer_gs[row, col].subgridspec(1, 2, wspace=0.07)
+    ax_left = fig.add_subplot(inner_gs[0, 0])
+    ax_right = fig.add_subplot(inner_gs[0, 1], sharey=ax_left)
+    ax_right.tick_params(axis="y", labelleft=False)
+    axes_groups.append([ax_left, ax_right])
+
+for axes in axes_groups:
+    for ax in axes:
+        ax.tick_params(axis="both", labelsize=tick_label_fontsize)
+
+norb_range = [4, 8, 12, 16]
+
+plot_results(
+    axes_groups[0],
+    benchmark_names=BENCHMARK_NAMES_QUAD_HAM,
+    norb_range=norb_range,
+    # ylim=(1e-4, 2e2),
+)
+plot_results(
+    axes_groups[1],
+    benchmark_names=BENCHMARK_NAMES_DIAG_COULOMB,
+    norb_range=norb_range,
+)
+plot_results(
+    axes_groups[2],
+    benchmark_names=BENCHMARK_NAMES_TROTTER,
+    norb_range=norb_range,
+    # ylim=(1e-3, 1e3),
+)
+plot_results(
+    axes_groups[3],
+    benchmark_names=BENCHMARK_NAMES_OP_ACTION,
+    norb_range=norb_range,
+    # ylim=(5e-5, 2e3),
+)
+group_titles = [
+    "Quadratic Hamiltonian evolution",
+    "Diagonal Coulomb evolution",
+    "Double factorized Trotter",
+    "Molecular Hamiltonian operator action",
+]
+
+for (row, col), title, axes in zip(group_positions, group_titles, axes_groups):
+    axes[0].set_title("1/2 filling", fontsize=title_fontsize)
+    axes[1].set_title("1/4 filling", fontsize=title_fontsize)
+    ax_span = fig.add_subplot(outer_gs[row, col])
+    ax_span.set_axis_off()
+    ax_span.set_title(title, fontsize=title_fontsize, fontweight="bold", pad=30)
+
+handles, labels = axes_groups[0][0].get_legend_handles_labels()
+fig.legend(
+    handles,
+    labels,
+    loc="lower center",
+    ncol=3,
+    fontsize=legend_fontsize,
+)
+fig.subplots_adjust(bottom=0.12)
+
+filepath = Path("plots/sim_single.pdf")
+os.makedirs(filepath.parent, exist_ok=True)
+plt.savefig(filepath, bbox_inches="tight")
+print(f"Saved figure to {filepath}.")
