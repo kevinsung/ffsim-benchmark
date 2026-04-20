@@ -334,17 +334,24 @@ def plot_bar_panel(ax, benchmark_names: dict[str, str], has_mac_multi: bool) -> 
         g_linux_1t + BAR_WIDTH / 2,
         g_linux_6t + BAR_WIDTH / 2,
         g_mac_1t + BAR_WIDTH / 2,
+        g_mac_6t,
     ]
-    group_labels = ["Linux\n1 CPU", "Linux\n6 CPUs", "Mac\n1 CPU"]
-    if has_mac_multi:
-        group_centers.append(g_mac_6t)
-        group_labels.append("Mac\n6 CPUs")
-        x_right = g_mac_6t + BAR_WIDTH
-    else:
-        x_right = g_mac_1t + 2 * BAR_WIDTH
+    group_labels = ["Linux\n1 CPU", "Linux\n6 CPUs", "Mac\n1 CPU", "Mac\n6 CPUs"]
+    x_right = g_mac_6t + BAR_WIDTH
     ax.set_xticks(group_centers)
     ax.set_xticklabels(group_labels, fontsize=tick_label_fontsize)
     ax.set_xlim(-BAR_WIDTH, x_right + BAR_WIDTH * 0.5)
+    if not has_mac_multi:
+        ax.text(
+            g_mac_6t,
+            0.25,
+            "N/A",
+            ha="center",
+            va="center",
+            fontsize=tick_label_fontsize,
+            color="gray",
+            transform=ax.get_xaxis_transform(),
+        )
 
 
 # ─── Build figure ───────────────────────────────────────────────────────────────
