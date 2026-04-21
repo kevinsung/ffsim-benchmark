@@ -20,7 +20,7 @@
     "matrix": {
         "req": {
             "dppy": [],
-            "fqe": [],
+            "fqe": ["git+https://github.com/quantumlib/OpenFermion-FQE.git@v0.3.0"],
             "openfermion": [],
             "qiskit-aer": [],
             "puccinialin": []
