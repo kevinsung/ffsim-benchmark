@@ -19,28 +19,47 @@ import numpy as np
 BENCHMARKS = {
     "Quadratic Ham. evo.": {
         "ffsim": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_ffsim",
-        "FQE": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_fqe",
+        "other": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_fqe",
+        "other_label": "FQE",
+        "key": ("16", "0.5"),
         "has_mac_multi": True,
     },
     "Diagonal Coulomb evo.": {
         "ffsim": "diag_coulomb.DiagCoulombEvoBenchmark.time_diag_coulomb_evolution_ffsim",
-        "FQE": "diag_coulomb.DiagCoulombEvoBenchmark.time_diag_coulomb_evolution_fqe",
+        "other": "diag_coulomb.DiagCoulombEvoBenchmark.time_diag_coulomb_evolution_fqe",
+        "other_label": "FQE",
+        "key": ("16", "0.5"),
         "has_mac_multi": True,
     },
     "Double factorized Trotter": {
         "ffsim": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_ffsim",
-        "FQE": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe",
+        "other": "trotter.TrotterBenchmark.time_simulate_trotter_double_factorized_fqe",
+        "other_label": "FQE",
+        "key": ("16", "0.5"),
         "has_mac_multi": True,
     },
     "Mol. Ham. operator action": {
         "ffsim": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_ffsim",
-        "FQE": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_fqe_restricted",
+        "other": "mol_ham_action.MolecularHamiltonianActionRealBenchmark.time_mol_ham_action_real_fqe_restricted",
+        "other_label": "FQE",
+        "key": ("16", "0.5"),
+        "has_mac_multi": False,
+    },
+    "Sample Slater det.": {
+        "ffsim": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_ffsim",
+        "other": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_gs_dppy",
+        "other_label": "DPPy",
+        "key": ("1600", "0.25", "1000"),
+        "has_mac_multi": False,
+    },
+    "Normal order": {
+        "ffsim": "fermion_operator.FermionOperatorBenchmark.time_normal_order_ffsim",
+        "other": "fermion_operator.FermionOperatorBenchmark.time_normal_order_openfermion",
+        "other_label": "OpenFermion",
+        "key": ("100000",),
         "has_mac_multi": False,
     },
 }
-
-NORB = 16
-FILLING_FRACTION = 0.5
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -68,11 +87,10 @@ def find_result_data(results_dir: str, num_threads: int) -> dict | None:
     return max(candidates, key=lambda x: x[0])[1]
 
 
-def get_time(data: dict | None, benchmark_name: str) -> float | None:
+def get_time(data: dict | None, benchmark_name: str, key: tuple) -> float | None:
     if data is None or benchmark_name not in data.get("results", {}):
         return None
     res = dict(zip(data["result_columns"], data["results"][benchmark_name]))
-    key = (str(NORB), str(FILLING_FRACTION))
     result_dict = dict(
         zip(
             itertools.product(*res["params"]),
@@ -107,14 +125,16 @@ def fmt_ratio(fqe: float | None, ffsim: float | None) -> str:
     return f"{fqe / ffsim:.2f}x"
 
 
-benchmark_col_width = max(len(f"[Linux] {name}") for name in BENCHMARKS)
+benchmark_col_width = max(
+    len(f"[Linux] {name} ({bench['other_label']})") for name, bench in BENCHMARKS.items()
+)
 col_width = 12
 sep = "  "
 
 
 def make_header_lines():
     group_names = ["1 CPU", "6 CPUs"]
-    sub = ["ffsim", "FQE", "FQE/ffsim"]
+    sub = ["ffsim", "other", "other/ffsim"]
 
     h1 = f"{'Benchmark':<{benchmark_col_width}}"
     h2 = f"{'':>{benchmark_col_width}}"
@@ -143,33 +163,35 @@ print(divider)
 
 for i, (bench_name, bench) in enumerate(BENCHMARKS.items()):
     ffsim_bname = bench["ffsim"]
-    fqe_bname = bench["FQE"]
+    other_bname = bench["other"]
+    other_label = bench["other_label"]
+    key = bench["key"]
     has_mac_multi = bench["has_mac_multi"]
 
-    linux1_ffsim = get_time(linux_1t, ffsim_bname)
-    linux1_fqe = get_time(linux_1t, fqe_bname)
+    linux1_ffsim = get_time(linux_1t, ffsim_bname, key)
+    linux1_other = get_time(linux_1t, other_bname, key)
 
-    linux6_ffsim = get_time(linux_6t, ffsim_bname)
-    linux6_fqe = get_time(linux_6t, fqe_bname)
+    linux6_ffsim = get_time(linux_6t, ffsim_bname, key)
+    linux6_other = get_time(linux_6t, other_bname, key)
 
-    mac1_ffsim = get_time(mac_1t, ffsim_bname)
-    mac1_fqe = get_time(mac_1t, fqe_bname)
+    mac1_ffsim = get_time(mac_1t, ffsim_bname, key)
+    mac1_other = get_time(mac_1t, other_bname, key)
 
-    # Mac 6 CPU: ffsim from 6T if available; FQE always from 1T
-    mac6_ffsim = get_time(mac_6t, ffsim_bname) if has_mac_multi else None
-    mac6_fqe = get_time(mac_1t, fqe_bname)
+    # Mac 6 CPU: ffsim from 6T if available; other always from 1T
+    mac6_ffsim = get_time(mac_6t, ffsim_bname, key) if has_mac_multi else None
+    mac6_other = get_time(mac_1t, other_bname, key)
 
     if i > 0:
         print()
-    print(make_row(f"[Linux] {bench_name}", [
-        fmt_time(linux1_ffsim), fmt_time(linux1_fqe), fmt_ratio(linux1_fqe, linux1_ffsim),
-        fmt_time(linux6_ffsim), fmt_time(linux6_fqe), fmt_ratio(linux6_fqe, linux6_ffsim),
+    print(make_row(f"[Linux] {bench_name} ({other_label})", [
+        fmt_time(linux1_ffsim), fmt_time(linux1_other), fmt_ratio(linux1_other, linux1_ffsim),
+        fmt_time(linux6_ffsim), fmt_time(linux6_other), fmt_ratio(linux6_other, linux6_ffsim),
     ]))
-    print(make_row(f"[Mac]   {bench_name}", [
-        fmt_time(mac1_ffsim), fmt_time(mac1_fqe), fmt_ratio(mac1_fqe, mac1_ffsim),
-        fmt_time(mac6_ffsim), fmt_time(mac6_fqe), fmt_ratio(mac6_fqe, mac6_ffsim),
+    print(make_row(f"[Mac]   {bench_name} ({other_label})", [
+        fmt_time(mac1_ffsim), fmt_time(mac1_other), fmt_ratio(mac1_other, mac1_ffsim),
+        fmt_time(mac6_ffsim), fmt_time(mac6_other), fmt_ratio(mac6_other, mac6_ffsim),
     ]))
 
 print()
 print(divider)
-print("† Mac 6 CPUs FQE column uses 1-CPU data (no multi-threaded FQE available on Mac).")
+print("† Mac 6 CPUs 'other' column uses 1-CPU data (no multi-threaded competitor available on Mac).")
