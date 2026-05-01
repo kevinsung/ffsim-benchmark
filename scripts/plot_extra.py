@@ -85,10 +85,10 @@ markers = {
 }
 
 capsize = 4
-legend_fontsize = 12
-tick_label_fontsize = 13
-axis_label_fontsize = 14
-title_fontsize = 15
+legend_fontsize = 14
+tick_label_fontsize = 14
+axis_label_fontsize = 16
+title_fontsize = 18
 
 
 def _load_benchmark_results(benchmark_names: dict[str, str]) -> dict[str, dict]:
