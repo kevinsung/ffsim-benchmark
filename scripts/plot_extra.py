@@ -19,6 +19,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+plt.rcParams["font.family"] = "Latin Modern Sans"
+
 SLATER_BENCHMARK_NAMES = {
     "DPPy": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_gs_dppy",
     "ffsim": "slater.SampleSlaterBenchmarkReal.time_sample_slater_real_ffsim",

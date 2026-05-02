@@ -20,6 +20,8 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 
+plt.rcParams["font.family"] = "Latin Modern Sans"
+
 # ─── Sim benchmark names ────────────────────────────────────────────────────────
 BENCHMARK_NAMES_QUAD_HAM = {
     "Aer": "quad_ham_evo.QuadHamEvoBenchmark.time_quad_ham_evolution_qiskit",
