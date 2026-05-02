@@ -498,26 +498,24 @@ fig.canvas.draw()
 
 left_pos = sim_axes_groups[-1][0].get_position()
 right_pos = sim_axes_groups[-1][1].get_position()
-sim_cx = (left_pos.x0 + right_pos.x1) / 2
 sim_bot = min(left_pos.y0, right_pos.y0)
 
 bar_pos = bar_axes[-1].get_position()
-bar_cx = (bar_pos.x0 + bar_pos.x1) / 2
 bar_bot = bar_pos.y0
 
 fig.legend(
     handles_sim,
     labels_sim,
-    loc="upper center",
-    bbox_to_anchor=(sim_cx, sim_bot - 0.06),
+    loc="upper left",
+    bbox_to_anchor=(left_pos.x0, sim_bot - 0.06),
     bbox_transform=fig.transFigure,
     ncol=3,
     fontsize=legend_fontsize,
 )
 fig.legend(
     handles=bar_legend_handles,
-    loc="upper center",
-    bbox_to_anchor=(bar_cx, bar_bot - 0.06),
+    loc="upper right",
+    bbox_to_anchor=(bar_pos.x1, bar_bot - 0.06),
     bbox_transform=fig.transFigure,
     ncol=2,
     fontsize=legend_fontsize,
