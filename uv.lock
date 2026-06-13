@@ -633,7 +633,7 @@ wheels = [
 
 [[package]]
 name = "ffsim"
-version = "0.0.80.dev0"
+version = "0.0.81.dev0"
 source = { editable = "../ffsim" }
 dependencies = [
     { name = "jax" },
@@ -649,7 +649,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "jax" },
-    { name = "numpy", specifier = "<=2.3" },
+    { name = "numpy" },
     { name = "opt-einsum" },
     { name = "orjson" },
     { name = "pyscf", specifier = ">=2.9" },
