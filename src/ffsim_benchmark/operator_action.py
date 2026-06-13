@@ -18,7 +18,6 @@ from ffsim_benchmark.util.convert import (
     ffsim_op_to_openfermion_op,
     ffsim_vec_to_fqe_wfn,
 )
-from ffsim_benchmark.util.random import random_fermion_hamiltonian
 
 
 class OperatorActionBenchmark:
@@ -48,7 +47,9 @@ class OperatorActionBenchmark:
         self.wfn_fqe = ffsim_vec_to_fqe_wfn(
             self.vec_ffsim, norb=self.norb, nelec=self.nelec
         )
-        self.op_ffsim = random_fermion_hamiltonian(norb=norb, n_terms=50, seed=rng)
+        self.op_ffsim = ffsim.random.random_fermion_hamiltonian(
+            norb=norb, n_terms=50, seed=rng
+        )
         self.op_openfermion = ffsim_op_to_openfermion_op(self.op_ffsim)
         self.op_fqe = fqe.get_sparse_hamiltonian(self.op_openfermion)
         self.linop_ffsim = ffsim.linear_operator(
